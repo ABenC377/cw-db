@@ -1,5 +1,11 @@
 List of features to implement:
--
+- method to read data from a sample file into a table in the database
+- Incorrectly formatted tab file throws an IOException, and doesn't crash (i.e., this exception should be caught
+by another part of the program)
+- platform-agnostic file separators
+- classes for tables, rows, columns, keys, table names, column names, data values, ids and relationships between entities.
 
 List of things to test for:
--
+- incorrectly formatted tab file throws an IOException
+- incorrectly formatted tab file does not result in a server crash
+- file separators work on any platform
