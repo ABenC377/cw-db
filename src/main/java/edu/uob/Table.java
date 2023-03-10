@@ -7,7 +7,7 @@ import java.util.Arrays;
 public class Table {
     private String name;
     private ArrayList<String> columns;
-    private int numRows;
+    private int numRows = 0;
     private int primaryKeyValue = 1;
 
     public Table(String name) {
@@ -44,7 +44,33 @@ public class Table {
             }
         }
 
-        this.columns = new ArrayList<>(Arrays.asList(firstRow.split("\t")));
+        if (firstRow != null) {
+            this.columns = new ArrayList<>(Arrays.asList(firstRow.split("\t")));
+        } else {
+            // something
+        }
 
+        //Checking that there is a column called "id" - as specified in the specification.  I'm being flexible
+        // and allowing this to be in any case
+        boolean hasPrimaryKey = false;
+        for (String col : this.columns) {
+            if (col.toLowerCase() == "id") {
+                hasPrimaryKey = true;
+            }
+        }
+        if (!hasPrimaryKey) {
+            // throw an excpetion or something
+        }
+
+        String current = null;
+        try {
+            current = bReader.readLine();
+        } catch (IOException e) {
+            // throw new RuntimeException(e);
+        }
+        while (current != null) {
+            numRows += 1;
+
+        }
     }
 }
