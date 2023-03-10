@@ -13,6 +13,8 @@ public class Table {
 
     public Table(String name) {
         this.name = name;
+        this.columns = new ArrayList<>();
+        columns.add("id");
     }
 
     public Table(File inputFile) {
@@ -73,10 +75,17 @@ public class Table {
         } catch (IOException e) {
             // throw new RuntimeException(e);
         }
+
         while (current != null) {
             ArrayList<String> rowList = new ArrayList<>(Arrays.asList(current.split("\t")));
             this.primaryKeyValue = Math.max(Integer.parseInt(rowList.get(primaryKeyIndex)), this.primaryKeyValue);
             rows.add(rowList);
+        }
+
+        try {
+            bReader.close();
+        } catch (IOException e) {
+            // throw new RuntimeException(e);
         }
     }
 }
