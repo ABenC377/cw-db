@@ -7,8 +7,9 @@ import java.util.Arrays;
 public class Table {
     private String name;
     private ArrayList<String> columns;
-    private int numRows = 0;
+    private ArrayList<ArrayList<String>> rows;
     private int primaryKeyValue = 1;
+    private int primaryKeyIndex;
 
     public Table(String name) {
         this.name = name;
@@ -53,10 +54,13 @@ public class Table {
         //Checking that there is a column called "id" - as specified in the specification.  I'm being flexible
         // and allowing this to be in any case
         boolean hasPrimaryKey = false;
+        int index = 0;
         for (String col : this.columns) {
             if (col.toLowerCase() == "id") {
+                primaryKeyIndex = index;
                 hasPrimaryKey = true;
             }
+            index++;
         }
         if (!hasPrimaryKey) {
             // throw an excpetion or something
@@ -65,12 +69,14 @@ public class Table {
         String current = null;
         try {
             current = bReader.readLine();
+            rows = new ArrayList<>();
         } catch (IOException e) {
             // throw new RuntimeException(e);
         }
         while (current != null) {
-            numRows += 1;
-
+            ArrayList<String> rowList = new ArrayList<>(Arrays.asList(current.split("\t")));
+            this.primaryKeyValue = Math.max(Integer.parseInt(rowList.get(primaryKeyIndex)), this.primaryKeyValue);
+            rows.add(rowList);
         }
     }
 }
