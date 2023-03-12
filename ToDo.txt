@@ -5,6 +5,8 @@ by another part of the program)
 - platform-agnostic file separators
 - classes for tables, rows, columns, keys, table names, column names, data values, ids and relationships between entities.
 - column names are stored in a case-sensitive way, but are case-insensitive for the purpose of querying
+- first column is always called 'id'
+- response sould always begine with '[OK]' or '[ERROR]'
 
 List of things to test for:
 - incorrectly formatted tab file throws an IOException
