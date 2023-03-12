@@ -7,6 +7,7 @@ by another part of the program)
 - column names are stored in a case-sensitive way, but are case-insensitive for the purpose of querying
 - first column is always called 'id'
 - response sould always begine with '[OK]' or '[ERROR]'
+- Exceptions should not be re†urned to the user (but a human-readable error message may)
 
 List of things to test for:
 - incorrectly formatted tab file throws an IOException
