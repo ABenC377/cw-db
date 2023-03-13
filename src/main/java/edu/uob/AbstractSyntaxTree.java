@@ -1,19 +1,18 @@
 package edu.uob;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 public class AbstractSyntaxTree {
     private Node root;
+    private String command;
 
     public AbstractSyntaxTree(String command) {
-        this.root =
-        this.parseCommand(command);
+        this.command = command;
+        this.root = new Node(NodeType.COMMAND, null);
+        this.parseCommand();
     }
 
-    private
-
-    private Node populateTree(ArrayList<String> tokens) {
-
+    private void parseCommand() {
+        Parser fsm = new Parser(root);
+        fsm.populateTree(command);
     }
+
 }

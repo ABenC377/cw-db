@@ -1,15 +1,38 @@
 package edu.uob;
 
 public class Node {
-    private Token type;
+    private NodeType type;
     private Node parent;
     private Node child1;
     private Node child2;
     private Node child3;
     private Node child4;
     private String value;
+    private boolean complete;
 
-    public Node(Token type, Node parent) {
+
+
+    public Node() {
+        this.type = null;
+        this.parent = null;
+        this.child1 = null;
+        this.child2 = null;
+        this.child3 = null;
+        this.child4 = null;
+        this.value = null;
+        this.complete = false;
+    }
+    public Node(Node parent) {
+        this.type = null;
+        this.parent = parent;
+        this.child1 = null;
+        this.child2 = null;
+        this.child3 = null;
+        this.child4 = null;
+        this.value = null;
+        this.complete = false;
+    }
+    public Node(NodeType type, Node parent) {
         this.type = type;
         this.parent = parent;
         this.child1 = null;
@@ -17,6 +40,7 @@ public class Node {
         this.child3 = null;
         this.child4 = null;
         this.value = null;
+        this.complete = false;
     }
 
 
@@ -40,8 +64,11 @@ public class Node {
     public String getValue() {
         return value;
     }
-    public Token getType() {
+    public NodeType getType() {
         return type;
+    }
+    public boolean isComplete() {
+        return complete;
     }
 
     // Setters
@@ -62,6 +89,9 @@ public class Node {
     }
     public void setValue(String value) {
         this.value = value;
+    }
+    public void setComplete(boolean complete) {
+        this.complete = complete;
     }
 }
 
