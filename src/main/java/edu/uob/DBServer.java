@@ -10,6 +10,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Paths;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /** This class implements the DB server. */
 public class DBServer {
@@ -42,13 +44,36 @@ public class DBServer {
     * <p>This method handles all incoming DB commands and carries out the required actions.
     */
     public String handleCommand(String command) {
-        // TODO implement your server logic here
+        // Check that the command string is sensible
+        if (this.commandIsInvalid(command)) {
+            return "[ERROR]: command provided is not in a correct syntax - please close command with a ';'";
+        }
+
+        // Fire up a temporary instance of the database on the saved .tab files
         Database db = new Database();
-        AbstractSyntaxTree ast = new AbstractSyntaxTree(command);
-        db.update(ast);
+
+        // Handle the query commands from the input String onto the temporary instance of the DB
+        ArrayList<String> commands = new ArrayList<>(Arrays.asList(command.split(";")));
+        ArrayList<AbstractSyntaxTree> ASTs = new ArrayList<>();
+        for (String currentCommand : commands) {
+            ASTs.add(new AbstractSyntaxTree(currentCommand));
+        }
+        for (AbstractSyntaxTree currentAST : ASTs) {
+            db.update(currentAST);
+        }
+
+        // Save the changes made to the temporary DB to the saved .tab files
         db.saveCurrentState();
+
+        // Output a string to let the user know how the has gone
         return "";
     }
+
+    private boolean commandIsInvalid(String command) {
+        return (command.contains(";"));
+    }
+
+
 
     //  === Methods below handle networking aspects of the project - you will not need to change these ! ===
 

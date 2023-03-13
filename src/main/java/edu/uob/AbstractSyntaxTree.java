@@ -7,18 +7,13 @@ public class AbstractSyntaxTree {
     private Node root;
 
     public AbstractSyntaxTree(String command) {
-        ArrayList<String> tokens = this.tokenise(command);
-        this.root = this.populateTree(tokens);
+        this.root =
+        this.parseCommand(command);
     }
 
-    private ArrayList<String> tokenise(String command) {
-        this.addCommands(command);
-
-    }
+    private
 
     private Node populateTree(ArrayList<String> tokens) {
 
     }
-
-
 }
