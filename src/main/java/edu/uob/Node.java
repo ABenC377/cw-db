@@ -72,6 +72,9 @@ public class Node {
     }
 
     // Setters
+    public void setType(NodeType type) {
+        this.type = type;
+    }
     public void setParent(Node parent) {
         this.parent = parent;
     }
