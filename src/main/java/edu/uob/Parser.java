@@ -43,7 +43,7 @@ public class Parser {
             return false;
         }
 
-        // set up and move to a new child node for the potential USE
+        // set up and move to a new child node for the potential database name
         current.setType(NodeType.USE);
         skipWhiteSpace();
         current.setChild1(new Node(current));
