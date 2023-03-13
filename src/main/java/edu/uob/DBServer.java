@@ -43,6 +43,10 @@ public class DBServer {
     */
     public String handleCommand(String command) {
         // TODO implement your server logic here
+        Database db = new Database();
+        AbstractSyntaxTree ast = new AbstractSyntaxTree(command);
+        db.update(ast);
+        db.saveCurrentState();
         return "";
     }
 
