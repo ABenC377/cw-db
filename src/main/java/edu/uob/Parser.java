@@ -1,5 +1,11 @@
 package edu.uob;
 
+/*
+GO THROUGH AND MAKE SURE THAT IT ALLOWS FOR MULTIPLE SPACES BETWEEN WORDS.  UFF
+ */
+
+
+
 public class Parser {
     private Node current;
     private String command;
@@ -312,7 +318,7 @@ public class Parser {
         skipWhiteSpace();
         current.addChild(new Node(NodeType.VALUE_LIST, current));
         current = current.getLastChild();
-        if (!tryValueList) {
+        if (!tryValueList()) {
             current = current.getParent();
             current.clearChildren();
             index = resetIndex;
@@ -354,7 +360,97 @@ public class Parser {
         return false;
     }
 
+    // [Value] ::= "'" [StringLiteral] | [BooleanLiteral] | [FloatLiteral] | [IntegerLiteral] | "NULL"
+    // I have changed the way the grammar is described for the first of these, as it boils down to the same but is
+    // easier to implement
     private boolean tryValue() {
+        int resetIndex = index;
+        if (substringIsNext("NULL")) {
+            current.setValue("NULL");
+            return true;
+        }
+        if (substringIsNext("'")) {
+            current.addChild(new Node(NodeType.STRING_LITERAL, current));
+            current = current.getLastChild();
+            if (tryStringLiteral()) {
+                current = current.getParent();
+                return true;
+            } else {
+                current = current.getParent();
+                current.clearChildren();
+                index = resetIndex;
+                return false;
+            }
+        }
+        current.addChild(new Node(current));
+        current = current.getLastChild();
+        if (tryBooleanLiteral()) {
+            current.setType(NodeType.BOOLEAN_LITERAL);
+            current = current.getParent();
+            return true;
+        } else if (tryFloatLiteral()) { // It is important that float is before integer here, as tryInteger() would
+                                        // return true for a float, but tryFloat() would not return true for an int
+            current.setType(NodeType.FLOAT_LITERAL);
+            current = current.getParent();
+            return true;
+        } else if (tryIntegerLiteral()) {
+            current.setType(NodeType.INTEGER_LITERAL);
+            current = current.getParent();
+            return true;
+        }
+        current = current.getParent();
+        current.clearChildren();
+        index = resetIndex;
+        return false;
+    }
+
+    // [BooleanLiteral] ::= "TRUE" | "FALSE"
+    private boolean tryBooleanLiteral() {
+        if (substringIsNext("TRUE")) {
+            current.setValue("TRUE");
+            return true;
+        } else if (substringIsNext("FALSE")) {
+            current.setValue("FALSE");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // [FloatLiteral] ::= [DigitSequence] "." [DigitSequence] | "-" [DigitSequence] "." [DigitSequence] | "+" [DigitSequence] "." [DigitSequence]
+    private boolean tryFloatLiteral() {
+        int resetIndex = index;
+        String value = "";
+        if (substringIsNext("+")) {} else if (substringIsNext("-")) {
+            value += "-";
+        }
+        char c = command.charAt(index);
+        if (!isDigit(c)) {
+            index = resetIndex;
+            return false;
+        }
+        int currentDigitSequenceIndex = index;
+        while (isDigit(c)) {
+            index++;
+            c = command.charAt(index);
+        }
+        value += command.substring(currentDigitSequenceIndex, index);
+        if (!substringIsNext(".")) {
+            index = resetIndex;
+            return false;
+        }
+
+
+
+    }
+
+    // [IntegerLiteral] ::= [DigitSequence] | "-" [DigitSequence] | "+" [DigitSequence]
+    private boolean tryIntegerLiteral() {
+
+    }
+
+    // [StringLiteral]   ::=  "'" | [CharLiteral] [StringLiteral]
+    private boolean tryStringLiteral() {
 
     }
 
