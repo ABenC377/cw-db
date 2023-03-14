@@ -420,42 +420,90 @@ public class Parser {
     // [FloatLiteral] ::= [DigitSequence] "." [DigitSequence] | "-" [DigitSequence] "." [DigitSequence] | "+" [DigitSequence] "." [DigitSequence]
     private boolean tryFloatLiteral() {
         int resetIndex = index;
-        String value = "";
-        if (substringIsNext("+")) {} else if (substringIsNext("-")) {
-            value += "-";
+        StringBuilder value = new StringBuilder();
+        if (substringIsNext("+")) {
+            index++;
+        } else if (substringIsNext("-")) {
+            index++;
+            value.append("-");
         }
         char c = command.charAt(index);
         if (!isDigit(c)) {
             index = resetIndex;
             return false;
         }
-        int currentDigitSequenceIndex = index;
         while (isDigit(c)) {
+            value.append(c);
             index++;
             c = command.charAt(index);
         }
-        value += command.substring(currentDigitSequenceIndex, index);
         if (!substringIsNext(".")) {
             index = resetIndex;
             return false;
         }
-
-
-
+        value.append('.');
+        c = command.charAt(index);
+        if (!isDigit(c)) {
+            index = resetIndex;
+            return false;
+        }
+        while (isDigit(c)) {
+            value.append(c);
+            index++;
+            c = command.charAt(index);
+        }
+        current.setValue(value.toString());
+        return true;
     }
 
     // [IntegerLiteral] ::= [DigitSequence] | "-" [DigitSequence] | "+" [DigitSequence]
     private boolean tryIntegerLiteral() {
-
+        int resetIndex = index;
+        StringBuilder value = new StringBuilder();
+        if (substringIsNext("+")) {
+            index++;
+        } else if (substringIsNext("-")) {
+            index++;
+            value.append("-");
+        }
+        char c = command.charAt(index);
+        if (!isDigit(c)) {
+            index = resetIndex;
+            return false;
+        }
+        while (isDigit(c)) {
+            value.append(c);
+            index++;
+            c = command.charAt(index);
+        }
+        current.setValue(value.toString());
+        return true;
     }
 
     // [StringLiteral]   ::=  "'" | [CharLiteral] [StringLiteral]
     private boolean tryStringLiteral() {
+        if (substringIsNext("'")) {
+            return true;
+        } else if (isCharLiteral()) {
+            tryStringLiteral();
+            return true;
+        } else {
+            return false;
+        }
+    }
 
+    private boolean isCharLiteral() {
+        char c = command.charAt(index++); // !!!Check that the "++" is applied after the charAt() method!!!
+        String acceptedChars = " !#$%&()*+,-./:;>=<?@[\\]^_`{}~";
+        return (isDigit(c) || isLetter(c) || acceptedChars.contains(String.valueOf(c)));
     }
 
     // <Select> ::= "SELECT " <WildAttribList> " FROM " [TableName] | "SELECT " <WildAttribList> " FROM " [TableName] " WHERE " <Condition>
     private boolean trySelect() {
+        int resetIndex = index;
+        if (!substringIsNext("SELECT ")) {
+            return false;
+        }
 
     }
 
