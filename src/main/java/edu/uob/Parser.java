@@ -95,6 +95,7 @@ public class Parser {
     // <AttributeList> ::= [AttributeName] | [AttributeName] "," <AttributeList>
     private boolean tryAttributeList() {
         int resetIndex = index;
+        skipWhiteSpace();
         current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
         current = current.getLastChild();
         if (tryAttributeName()) {
@@ -106,10 +107,15 @@ public class Parser {
             return false;
         }
         resetIndex = index;
-        if (substringIsNext(",") && !tryAttributeList()) {
-            index = resetIndex;
+        skipWhiteSpace();
+        if (substringIsNext(",")) {
+            skipWhiteSpace();
+            if (tryAttributeList()) {
+                return true;
+            }
         }
-        return true;
+        index = resetIndex;
+        return false;
     }
 
     // [AttributeName] ::= [PlainText] | [TableName] "." [PlainText]
@@ -275,6 +281,80 @@ public class Parser {
 
     // <Insert> ::= "INSERT INTO " [TableName] " VALUES(" <ValueList> ")"
     private boolean tryInsert() {
+        int resetIndex = index;
+        skipWhiteSpace();
+        if (!substringIsNext("INSERT INTO ")) {
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.TABLE_NAME, current));
+        current = current.getLastChild();
+        if (!tryPlainText()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        // Need to do a janky check for space, clearWhiteSpace, check for rest of keyword because of the possibility of
+        // multiple whitespaces before the keyword
+        if (!substringIsNext(" ")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+        if (!substringIsNext("VALUES(")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.VALUE_LIST, current));
+        current = current.getLastChild();
+        if (!tryValueList) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        skipWhiteSpace();
+        if (!substringIsNext(")")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        return true;
+    }
+
+    // <ValueList> ::= [Value] | [Value] "," <ValueList>
+    private boolean tryValueList() {
+        int resetIndex = index;
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.VALUE, current));
+        current = current.getLastChild();
+        if (tryValue()) {
+            current = current.getParent();
+        } else {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        resetIndex = index;
+        skipWhiteSpace();
+        if (substringIsNext(",")) {
+            skipWhiteSpace();
+            if (tryValueList()) {
+                return true;
+            }
+        }
+        index = resetIndex;
+        return false;
+    }
+
+    private boolean tryValue() {
 
     }
 
