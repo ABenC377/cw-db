@@ -1,12 +1,11 @@
 package edu.uob;
 
+import java.util.ArrayList;
+
 public class Node {
     private NodeType type;
     private Node parent;
-    private Node child1;
-    private Node child2;
-    private Node child3;
-    private Node child4;
+    private ArrayList<Node> children;
     private String value;
     private boolean complete;
 
@@ -15,30 +14,21 @@ public class Node {
     public Node() {
         this.type = null;
         this.parent = null;
-        this.child1 = null;
-        this.child2 = null;
-        this.child3 = null;
-        this.child4 = null;
+        this.children = new ArrayList<>();
         this.value = null;
         this.complete = false;
     }
     public Node(Node parent) {
         this.type = null;
         this.parent = parent;
-        this.child1 = null;
-        this.child2 = null;
-        this.child3 = null;
-        this.child4 = null;
+        this.children = new ArrayList<>();
         this.value = null;
         this.complete = false;
     }
     public Node(NodeType type, Node parent) {
         this.type = type;
         this.parent = parent;
-        this.child1 = null;
-        this.child2 = null;
-        this.child3 = null;
-        this.child4 = null;
+        this.children = new ArrayList<>();
         this.value = null;
         this.complete = false;
     }
@@ -49,17 +39,36 @@ public class Node {
     public Node getParent() {
         return parent;
     }
-    public Node getChild1() {
-        return child1;
+    public Node getLastChild() {
+        if (!(children.isEmpty())) {
+            return children.get(children.size() - 1);
+        } else {
+            return null;
+        }
     }
-    public Node getChild2() {
-        return child2;
+    public Node getChild(int index) {
+        if (index < children.size() && index >= 0) {
+            return children.get(index);
+        } else {
+            return null;
+        }
     }
-    public Node getChild3() {
-        return child3;
+    public Node popChild() {
+        if (!(children.isEmpty())) {
+            return children.remove(children.size() - 1);
+        } else {
+            return null;
+        }
     }
-    public Node getChild4() {
-        return child4;
+    public Node popChild(int index) {
+        if (index < children.size() && index >= 0) {
+            return children.remove(index);
+        } else {
+            return null;
+        }
+    }
+    public int getNumberChildren() {
+        return children.size();
     }
     public String getValue() {
         return value;
@@ -78,17 +87,8 @@ public class Node {
     public void setParent(Node parent) {
         this.parent = parent;
     }
-    public void setChild1(Node child1) {
-        this.child1 = child1;
-    }
-    public void setChild2(Node child2) {
-        this.child2 = child2;
-    }
-    public void setChild3(Node child3) {
-        this.child3 = child3;
-    }
-    public void setChild4(Node child4) {
-        this.child4 = child4;
+    public void addChild(Node child) {
+        this.children.add(child);
     }
     public void setValue(String value) {
         this.value = value;
