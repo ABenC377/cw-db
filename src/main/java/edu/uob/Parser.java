@@ -12,7 +12,7 @@ public class Parser {
     }
 
     public boolean populateTree() {
-        // making a new child node for the potential commandtype
+        // making a new child node for the potential command type
         current.addChild(new Node(current));
         current = current.getLastChild();
 
@@ -24,7 +24,7 @@ public class Parser {
             current = current.getParent();
             return true;
         } else {
-            // getting rid of the impossible commandtype node before returning
+            // getting rid of the impossible command type node before returning
             current = current.getParent();
             current.popChild();
             return false;
@@ -33,7 +33,7 @@ public class Parser {
 
     // <Use> ::= "USE " [DatabaseName]
     private boolean tryUse() {
-        // save the index so we can reset it before returning false
+        // save the index, so we can reset it before returning false
         int originalIndex = index;
 
         // check for the keyword
@@ -72,7 +72,7 @@ public class Parser {
         int originalIndex = index;
         skipWhiteSpace();
         // Check for the key word sequence
-        if (!substringIsNext("CREATE TABLE ")) {
+        if (!substringIsNext("CREATE DATABASE ")) {
             index = originalIndex;
             return false;
         }
@@ -130,13 +130,70 @@ public class Parser {
         int resetIndex = index;
         current.addChild(current);
         current = current.getLastChild();
-        if (tryPlainText()) {
-
+        // Check for at least one plain text instance.  If not there then clean up and return false
+        if (!tryPlainText()) {
+            current = current.getParent();
+            current.popChild();
+            index = resetIndex;
+            return false;
+        } else {
+            // If there is one plain text instance, check for a full-stop and another one.  Either way return true
+            resetIndex = index;
+            if (substringIsNext(".")) {
+                current.setType(NodeType.TABLE_NAME);
+                current = current.getParent();
+                current.addChild(new Node(NodeType.PLAIN_TEXT, current));
+                if (tryPlainText()) {
+                    current = current.getParent();
+                } else {
+                    current = current.getParent();
+                    current.popChild();
+                }
+            } else {
+                current.setType(NodeType.PLAIN_TEXT);
+                current = current.getParent();
+            }
+            index = resetIndex;
+            return true;
         }
     }
 
     // <CreateTable> ::= "CREATE TABLE " [TableName] | "CREATE TABLE " [TableName] "(" <AttributeList> ")"
     private boolean tryCreateTable() {
+        int originalIndex = index;
+        skipWhiteSpace();
+        // Check for the key word sequence
+        if (!substringIsNext("CREATE TABLE ")) {
+            index = originalIndex;
+            return false;
+        }
+
+        // Check for the table name
+        current.setType(NodeType.CREATE_TABLE);
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.TABLE_NAME, current));
+        current = current.getLastChild();
+        if (!tryPlainText()) {
+            current = current.getParent();
+            current.popChild();
+            index = originalIndex;
+            return false;
+        } else {
+            current = current.getParent();
+        }
+
+        // Check for a possible attribute list
+        int intermediateIndex = index;
+        current.addChild(new Node(NodeType.ATTRIBUTE_LIST, current));
+        current = current.getLastChild();
+        if (substringIsNext("(") && tryAttributeList() && substringIsNext(")")) {
+            current = current.getParent();
+        } else {
+            index = intermediateIndex;
+            current = current.getParent();
+            current.popChild();
+        }
+        return true;
 
     }
 
