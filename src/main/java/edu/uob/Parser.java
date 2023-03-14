@@ -76,11 +76,10 @@ public class Parser {
             index = originalIndex;
             return false;
         }
-
-        // Check for the table name
+        // Check for the database name
         current.setType(NodeType.CREATE_TABLE);
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.TABLE_NAME, current));
+        current.addChild(new Node(NodeType.DATABASE_NAME, current));
         current = current.getLastChild();
         if (!tryPlainText()) {
             current = current.getParent();
@@ -89,20 +88,8 @@ public class Parser {
             return false;
         } else {
             current = current.getParent();
+            return true;
         }
-
-        // Check for a possible attribute list
-        int intermediateIndex = index;
-        current.addChild(new Node(NodeType.ATTRIBUTE_LIST, current));
-        current = current.getLastChild();
-        if (substringIsNext("(") && tryAttributeList() && substringIsNext(")")) {
-            current = current.getParent();
-        } else {
-            index = intermediateIndex;
-            current = current.getParent();
-            current.popChild();
-        }
-        return true;
     }
 
     // <AttributeList> ::= [AttributeName] | [AttributeName] "," <AttributeList>
@@ -199,12 +186,91 @@ public class Parser {
 
     // <Drop> ::= "DROP DATABASE " [DatabaseName] | "DROP TABLE " [TableName]
     private boolean tryDrop() {
+        int resetIndex = index;
+        skipWhiteSpace();
+        // Check for either of the keywords
+        boolean isDatabase = substringIsNext("DROP DATABASE ");
+        boolean isTable = substringIsNext("DROP TABLE ");
 
+        // If they are there, then look for the plaintext of the database/table name
+        if (isDatabase || isTable) {
+            skipWhiteSpace();
+            current.addChild((isDatabase) ? new Node(NodeType.DATABASE_NAME, current) : new Node(NodeType.TABLE_NAME, current));
+            current = current.getLastChild();
+            if (tryPlainText()) {
+                current = current.getParent();
+                return true;
+            }
+            // If this has failed, then reset and return false
+            current = current.getParent();
+            current.popChild();
+        }
+        index = resetIndex;
+        return false;
     }
 
     // <Alter> ::= "ALTER TABLE " [TableName] " " [AlterationType] " " [AttributeName]
     private boolean tryAlter() {
+        int resetIndex = index;
+        skipWhiteSpace();
+        if (!substringIsNext("ALTER TABLE ")) {
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.TABLE_NAME, current));
+        current = current.getLastChild();
+        if (!tryPlainText()) {
+            current = current.getParent();
+            current.popChild();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        if (!substringIsNext(" ")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.ALTERATION_TYPE, current));
+        current = current.getLastChild();
+        if (!tryAlterationType()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        if (!substringIsNext(" ")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
+        current = current.getLastChild();
+        if (tryAttributeName()) {
+            current = current.getParent();
+            return true;
+        } else {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+    }
 
+    // [AlterationType] ::= "ADD" | "DROP"
+    private boolean tryAlterationType() {
+        if (substringIsNext("ADD")) {
+            current.setValue("ADD");
+            return true;
+        } else if (substringIsNext("DROP")) {
+            current.setValue("DROP");
+            return true;
+        } else {
+            return false;
+        }
     }
 
     // <Insert> ::= "INSERT INTO " [TableName] " VALUES(" <ValueList> ")"

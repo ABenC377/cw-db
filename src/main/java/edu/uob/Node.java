@@ -33,7 +33,9 @@ public class Node {
         this.complete = false;
     }
 
-
+    public void clearChildren() {
+        children.clear();
+    }
 
     // Getters
     public Node getParent() {
