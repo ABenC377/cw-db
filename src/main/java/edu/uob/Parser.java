@@ -239,29 +239,19 @@ public class Parser {
             return false;
         }
         current = current.getParent();
-        if (!substringIsNext(" ")) {
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
         skipWhiteSpace();
         current.addChild(new Node(NodeType.ALTERATION_TYPE, current));
         current = current.getLastChild();
-        if (!tryAlterationType()) {
+        if (!previousCharacterWas(' ') || !tryAlterationType()) {
             current = current.getParent();
             current.clearChildren();
             index = resetIndex;
             return false;
         }
         current = current.getParent();
-        if (!substringIsNext(" ")) {
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
         current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
         current = current.getLastChild();
-        if (tryAttributeName()) {
+        if (previousCharacterWas(' ') && tryAttributeName()) {
             current = current.getParent();
             return true;
         } else {
@@ -302,15 +292,9 @@ public class Parser {
             index = resetIndex;
             return false;
         }
-        // Need to do a janky check for space, clearWhiteSpace, check for rest of keyword because of the possibility of
-        // multiple whitespaces before the keyword
-        if (!substringIsNext(" ")) {
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
+        // Need to do a janky check for space because of the possibility of multiple whitespaces before the keyword
         skipWhiteSpace();
-        if (!substringIsNext("VALUES(")) {
+        if (!previousCharacterWas(' ') || !substringIsNext("VALUES(")) {
             current.clearChildren();
             index = resetIndex;
             return false;
@@ -515,13 +499,8 @@ public class Parser {
             return false;
         }
         current = current.getParent();
-        if (!substringIsNext(" ")) {
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
         skipWhiteSpace();
-        if (!substringIsNext("FROM ")) {
+        if (!previousCharacterWas(' ') || !substringIsNext("FROM ")) {
             current.clearChildren();
             index = resetIndex;
             return false;
@@ -535,18 +514,18 @@ public class Parser {
             return false;
         }
         current = current.getParent();
+
+        // Check for an optional WHERE statement
         resetIndex = index;
-        if (substringIsNext(" ")) {
-            skipWhiteSpace();
-            current.addChild(new Node(NodeType.CONDITION, current));
-            current = current.getLastChild();
-            if (substringIsNext("WHERE ") && tryConditionR()) {
-                current = current.getParent();
-            } else {
-                current = current.getParent();
-                current.popChild();
-                index = resetIndex;
-            }
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.CONDITION, current));
+        current = current.getLastChild();
+        if (previousCharacterWas(' ') && substringIsNext("WHERE ") && tryConditionR()) {
+            current = current.getParent();
+        } else {
+            current = current.getParent();
+            current.popChild();
+            index = resetIndex;
         }
         return true;
     }
@@ -648,14 +627,119 @@ public class Parser {
         return true;
     }
 
+    // <WildAttribList> ::= <AttributeList> | "*"
+    private boolean tryWildAttributeList() {
+        int resetIndex = index;
+        skipWhiteSpace();
+        if (substringIsNext("*")) {
+            current.setValue("*");
+            return true;
+        } else if (tryAttributeList()) {
+            return true;
+        } else {
+            index = resetIndex;
+            return false;
+        }
+    }
+
+    // [BoolOperator] ::= "AND" | "OR"
+    private boolean tryBoolOperator() {
+        if (substringIsNext("AND")) {
+            current.setValue("AND");
+            return true;
+        } else if (substringIsNext("OR")) {
+            current.setValue("OR");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     // [Comparator] ::= "==" | ">" | "<" | ">=" | "<=" | "!=" | " LIKE "
     private boolean tryComparator() {
-        return (substringIsNext("==") || substringIsNext("==") || substringIsNext("==") || substringIsNext("==")
-                || substringIsNext("==") || substringIsNext("==") || substringIsNext("=="));
+        if (substringIsNext("==")) {
+            current.setValue("==");
+            return true;
+        } else if (substringIsNext(">")) {
+            current.setValue(">");
+            return true;
+        } else if (substringIsNext("<")) {
+            current.setValue("<");
+            return true;
+        } else if (substringIsNext(">=")) {
+            current.setValue(">=");
+            return true;
+        } else if (substringIsNext("<=")) {
+            current.setValue("<=");
+            return true;
+        } else if (substringIsNext("!=")) {
+            current.setValue("!=");
+            return true;
+        } else if (previousCharacterWas(' ') && substringIsNext("LIKE ")) {
+            current.setValue("LIKE");
+            return true;
+        } else {
+            return false;
+        }
     }
 
     // <Update> ::= "UPDATE " [TableName] " SET " <NameValueList> " WHERE " <Condition>
     private boolean tryUpdate() {
+        int resetIndex = index;
+        skipWhiteSpace();
+        if (!substringIsNext("UPDATE ")) {
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.TABLE_NAME, current));
+        current = current.getLastChild();
+        if (!tryPlainText()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        skipWhiteSpace();
+        if (!previousCharacterWas(' ') || !substringIsNext("SET ")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.NAME_VALUE_LIST, current));
+        current = current.getLastChild();
+        if (!tryNameValueList()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        skipWhiteSpace();
+        if (!previousCharacterWas(' ') || !substringIsNext("WHERE ")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.CONDITION, current));
+        current = current.getLastChild();
+        if (!tryConditionR()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        return true;
+    }
+
+    // <NameValueList> ::= <NameValuePair> | <NameValuePair> "," <NameValueList>
+    private boolean tryNameValueList() {
+        int resetIndex = index;
+        skipWhiteSpace();
 
     }
 
@@ -699,6 +783,15 @@ public class Parser {
         } else {
             return false;
         }
+    }
+
+    private boolean previousCharacterWas(char c) {
+        // catch an out-of-index error before it happens
+        if (index < 1) {
+            return false;
+        }
+
+        return (command.charAt(index - 1) == c);
     }
 
     private boolean isLetter(char c) {
