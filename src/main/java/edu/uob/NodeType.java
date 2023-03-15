@@ -34,7 +34,7 @@ public enum NodeType {
     STRING_LITERAL("[string literal]"),
     VALUE("[value]"),
     TABLE_NAME("[table name]"),
-    ATTRIBUTE_NAME("[attribtue name]"),
+    ATTRIBUTE_NAME("[attribute name]"),
     DATABASE_NAME("[database name]"),
     WILD_ATTRIBUTE_LIST("<wild attribute list>"),
     ATTRIBUTE_LIST("<attribute list>"),

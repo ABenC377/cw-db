@@ -13,13 +13,16 @@ public class AbstractSyntaxTree {
     }
 
     private void parseCommand() {
-        Parser fsm = new Parser(root, command);
-        fsm.populateTree();
+        Parser parser = new Parser(root, command);
+        if (parser.populateTree()) {
+            // Give OKAY response
+        } else {
+            // Give ERROR response
+        }
     }
 
     @Override
     public String toString() {
-        System.out.println("Number of children to the root node: " + root.getNumberChildren());
         StringBuilder buffer = new StringBuilder(500);
         if (root.getNumberChildren() == 0) {
             return "Empty Tree";
@@ -34,12 +37,10 @@ public class AbstractSyntaxTree {
         buffer.append('\n');
         for (Iterator<Node> childIterator = rt.getChildren().iterator(); childIterator.hasNext();) {
             Node next = childIterator.next();
-            if (next != null) {
-                if (childIterator.hasNext()) {
-                    print(buffer, childrenPrefix + "├── ", childrenPrefix + "│   ", next);
-                } else {
-                    print(buffer, childrenPrefix + "└── ", childrenPrefix + "    ", next);
-                }
+            if (childIterator.hasNext()) {
+                print(buffer, childrenPrefix + "├── ", childrenPrefix + "│   ", next);
+            } else {
+                print(buffer, childrenPrefix + "└── ", childrenPrefix + "    ", next);
             }
         }
     }

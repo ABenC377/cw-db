@@ -8,7 +8,7 @@ GO THROUGH AND MAKE SURE THAT IT ALLOWS FOR MULTIPLE SPACES BETWEEN WORDS.  UFF
 
 public class Parser {
     private Node current;
-    private String command;
+    private final String command;
     int index;
 
     public Parser(Node root, String command) {
@@ -24,45 +24,45 @@ public class Parser {
 
         // checking that there is a valid command type
         if (tryUse()) {
-            current = current.getParent();
             current.setType(NodeType.USE);
+            current = current.getParent();
             return true;
         } else if (tryCreate()) {
-            current = current.getParent();
             current.setType(NodeType.CREATE);
+            current = current.getParent();
             return true;
         } else if (tryDrop()) {
-            current = current.getParent();
             current.setType(NodeType.DROP);
+            current = current.getParent();
             return true;
         } else if (tryAlter()) {
-            current = current.getParent();
             current.setType(NodeType.ALTER);
+            current = current.getParent();
             return true;
         } else if (tryInsert()) {
-            current = current.getParent();
             current.setType(NodeType.INSERT);
+            current = current.getParent();
             return true;
         } else if (trySelect()) {
-            current = current.getParent();
             current.setType(NodeType.SELECT);
+            current = current.getParent();
             return true;
         } else if (tryUpdate()) {
-            current = current.getParent();
             current.setType(NodeType.UPDATE);
+            current = current.getParent();
             return true;
         } else if (tryDelete()) {
-            current = current.getParent();
             current.setType(NodeType.DELETE);
+            current = current.getParent();
             return true;
         } else if (tryJoin()) {
-            current = current.getParent();
             current.setType(NodeType.JOIN);
+            current = current.getParent();
             return true;
         } else {
             // getting rid of the impossible command type node before returning
             current = current.getParent();
-            current.popChild();
+            current.clearChildren();
             return false;
         }
     }
@@ -119,7 +119,7 @@ public class Parser {
         current = current.getLastChild();
         if (!tryPlainText()) {
             current = current.getParent();
-            current.popChild();
+            current.clearChildren();
             index = originalIndex;
             return false;
         } else {
@@ -157,43 +157,47 @@ public class Parser {
     // [AttributeName] ::= [PlainText] | [TableName] "." [PlainText]
     private boolean tryAttributeName() {
         int resetIndex = index;
-        current.addChild(current);
+        current.addChild(new Node(NodeType.PLAIN_TEXT, current));
         current = current.getLastChild();
+
         // Check for at least one plain text instance.  If not there then clean up and return false
         if (!tryPlainText()) {
             current = current.getParent();
-            current.popChild();
+            current.clearChildren();
             index = resetIndex;
             return false;
-        } else {
-            // If there is one plain text instance, check for a full-stop and another one.  Either way return true
-            resetIndex = index;
-            if (substringIsNext(".")) {
-                current.setType(NodeType.TABLE_NAME);
-                current = current.getParent();
-                current.addChild(new Node(NodeType.PLAIN_TEXT, current));
-                if (tryPlainText()) {
-                    current = current.getParent();
-                } else {
-                    current = current.getParent();
-                    current.popChild();
-                }
-            } else {
-                current.setType(NodeType.PLAIN_TEXT);
-                current = current.getParent();
-            }
-            index = resetIndex;
-            return true;
         }
+
+        // If there is no full stop, then we can return true with the simple PlainText AttributeName
+        if (!substringIsNext(".")) {
+            current = current.getParent();
+            return true;
+        } else {
+            resetIndex = index;
+            current.setType(NodeType.TABLE_NAME);
+            current = current.getParent();
+        }
+
+        current.addChild(new Node(NodeType.PLAIN_TEXT, current));
+        current = current.getLastChild();
+        if (tryPlainText()) {
+            current = current.getParent();
+        } else {
+            current = current.getParent();
+            current.popChild();
+            index = resetIndex;
+        }
+        return true;
+
     }
 
     // <CreateTable> ::= "CREATE TABLE " [TableName] | "CREATE TABLE " [TableName] "(" <AttributeList> ")"
     private boolean tryCreateTable() {
-        int originalIndex = index;
+        int resetIndex = index;
         skipWhiteSpace();
         // Check for the key word sequence
         if (!substringIsNext("CREATE TABLE ")) {
-            index = originalIndex;
+            index = resetIndex;
             return false;
         }
 
@@ -204,8 +208,8 @@ public class Parser {
         current = current.getLastChild();
         if (!tryPlainText()) {
             current = current.getParent();
-            current.popChild();
-            index = originalIndex;
+            current.clearChildren();
+            index = resetIndex;
             return false;
         } else {
             current = current.getParent();
@@ -238,24 +242,39 @@ public class Parser {
         if (isDatabase || isTable) {
             skipWhiteSpace();
             current.addChild((isDatabase) ? new Node(NodeType.DATABASE_NAME, current) : new Node(NodeType.TABLE_NAME, current));
+
+            // >>>>>>
             current = current.getLastChild();
             if (tryPlainText()) {
                 current = current.getParent();
+                // <<<<<<
+
                 return true;
+            } else {
+                // If this has failed, then reset and return false
+                current = current.getParent();
+                // <<<<<<
+
+                current.clearChildren();
+                index = resetIndex;
+                return false;
             }
-            // If this has failed, then reset and return false
-            current = current.getParent();
-            current.clearChildren();
+        } else {
+            index = resetIndex;
+            return false;
         }
-        index = resetIndex;
-        return false;
     }
 
     // <Alter> ::= "ALTER TABLE " [TableName] " " [AlterationType] " " [AttributeName]
     private boolean tryAlter() {
         int resetIndex = index;
         skipWhiteSpace();
-        if (!substringIsNext("ALTER TABLE ")) {
+        if (!substringIsNext("ALTER ")) {
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+        if (!substringIsNext("TABLE ")) {
             index = resetIndex;
             return false;
         }
@@ -264,11 +283,12 @@ public class Parser {
         current = current.getLastChild();
         if (!tryPlainText()) {
             current = current.getParent();
-            current.popChild();
+            current.clearChildren();
             index = resetIndex;
             return false;
+        } else {
+            current = current.getParent();
         }
-        current = current.getParent();
         skipWhiteSpace();
         current.addChild(new Node(NodeType.ALTERATION_TYPE, current));
         current = current.getLastChild();
@@ -277,18 +297,20 @@ public class Parser {
             current.clearChildren();
             index = resetIndex;
             return false;
+        } else {
+            current = current.getParent();
         }
-        current = current.getParent();
+        skipWhiteSpace();
         current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
         current = current.getLastChild();
-        if (previousCharacterWas(' ') && tryAttributeName()) {
-            current = current.getParent();
-            return true;
-        } else {
+        if (!previousCharacterWas(' ') || !tryAttributeName()) {
             current = current.getParent();
             current.clearChildren();
             index = resetIndex;
             return false;
+        } else {
+            current = current.getParent();
+            return true;
         }
     }
 
@@ -560,6 +582,10 @@ public class Parser {
         return true;
     }
 
+
+    /*
+    ARGH - THIS WON'T WORK FOR BRACKETS!!!!! -- FIX LATER
+     */
     // <Condition> ::= "(" <Condition> [BoolOperator] <Condition> ")" | <Condition> [BoolOperator] <Condition> | "(" [AttributeName] [Comparator] [Value] ")" | [AttributeName] [Comparator] [Value]
     // The second option for <condition> is susceptible to a left-handed recursion infinite loop.
     // Therefore, I have two tryCondition methods: tryConditionR() (which allows all four types of <condition>;

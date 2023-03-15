@@ -39,6 +39,9 @@ public class Node {
 
     // Getters
     public Node getParent() {
+        if (parent == null) {
+            System.out.println("ERROR -- tried to getParent() of a Node with a null parent");
+        }
         return parent;
     }
     public Node getLastChild() {
