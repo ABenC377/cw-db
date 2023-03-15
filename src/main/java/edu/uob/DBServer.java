@@ -19,7 +19,7 @@ public class DBServer {
     private static final char END_OF_TRANSMISSION = 4;
     private String storageFolderPath;
 
-    public static void main(String args[]) throws IOException {
+    public static void main(String[] args) throws IOException {
         DBServer server = new DBServer();
         server.blockingListenOn(8888);
     }
@@ -58,12 +58,17 @@ public class DBServer {
         for (String currentCommand : commands) {
             ASTs.add(new AbstractSyntaxTree(currentCommand));
         }
+        /*
+        ________ COMMENTED OUT TO ALLOW BUILD AND TESTING OF OTHER FEATURES __________
+
         for (AbstractSyntaxTree currentAST : ASTs) {
             db.update(currentAST);
         }
 
         // Save the changes made to the temporary DB to the saved .tab files
         db.saveCurrentState();
+
+         */
 
         // Output a string to let the user know how the has gone
         return "";

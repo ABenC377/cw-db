@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class Node {
     private NodeType type;
     private Node parent;
-    private ArrayList<Node> children;
+    private final ArrayList<Node> children;
     private String value;
     private boolean complete;
 
@@ -55,14 +55,14 @@ public class Node {
             return null;
         }
     }
-    public Node popChild() {
+    public void popChild() {
         if (!(children.isEmpty())) {
             return children.remove(children.size() - 1);
         } else {
             return null;
         }
     }
-    public Node popChild(int index) {
+    public void popChild(int index) {
         if (index < children.size() && index >= 0) {
             return children.remove(index);
         } else {
@@ -80,6 +80,9 @@ public class Node {
     }
     public boolean isComplete() {
         return complete;
+    }
+    public ArrayList<Node> getChildren() {
+        return children;
     }
 
     // Setters

@@ -1,8 +1,10 @@
 package edu.uob;
 
+import java.util.Iterator;
+
 public class AbstractSyntaxTree {
-    private Node root;
-    private String command;
+    private final Node root;
+    private final String command;
 
     public AbstractSyntaxTree(String command) {
         this.command = command;
@@ -17,12 +19,8 @@ public class AbstractSyntaxTree {
 
     @Override
     public String toString() {
-        return toString(root);
-    }
-
-    private String toString(Node rt) {
         StringBuilder buffer = new StringBuilder(500);
-        print(buffer, "", "", rt);
+        print(buffer, "", "", root);
         return buffer.toString();
     }
 
@@ -30,12 +28,12 @@ public class AbstractSyntaxTree {
         buffer.append(prefix);
         buffer.append(rt.getType().toString());
         buffer.append('\n');
-        for (Iterator<Node> it = children.iterator(); it.hasNext();) {
-            TreeNode next = it.next();
-            if (it.hasNext()) {
-                next.print(buffer, childrenPrefix + "├── ", childrenPrefix + "│   ");
+        for (Iterator<Node> childIterator = rt.getChildren().iterator(); childIterator.hasNext();) {
+            Node next = childIterator.next();
+            if (childIterator.hasNext()) {
+                print(buffer, childrenPrefix + "├── ", childrenPrefix + "│   ", next);
             } else {
-                next.print(buffer, childrenPrefix + "└── ", childrenPrefix + "    ");
+                print(buffer, childrenPrefix + "└── ", childrenPrefix + "    ", next);
             }
         }
     }
