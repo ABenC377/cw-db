@@ -9,6 +9,10 @@ methods are called.  Each of these prepares a holder tree node before calling th
 method fails, then the temporary node is deleted and a boolean value of false is returned.  
 This abstract syntax tree is then provided as input to the interpretter
 
+### Error detection
+every time you get a false from the recursive-descent-parser, add an error and the index of the failure - at the end the failure with the
+greatest index will be the correct error
+
 ### Database server
 The server itself stores a permanent copy of the information in the database in tab-separated files in the local files
 system.  When a query is provided to the server, it reads the tab-separated files to make a temporary data-structure 

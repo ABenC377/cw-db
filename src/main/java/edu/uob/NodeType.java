@@ -2,11 +2,54 @@ package edu.uob;
 
 public enum NodeType {
     // AST node types
-    COMMAND, COMMAND_TYPE, USE, CREATE, CREATE_DATABASE, CREATE_TABLE, DROP,
-    ALTER, INSERT, SELECT, UPDATE, DELETE, JOIN, DIGIT, UPPER_CASE, LOWER_CASE,
-    LETTER, PLAIN_TEXT, SYMBOL, SPACE, NAME_VALUE_LIST, NAME_VALUE_PAIR,
-    ALTERATION_TYPE, VALUE_LIST, DIGIT_SEQUENCE, INTEGER_LITERAL, FLOAT_LITERAL,
-    BOOLEAN_LITERAL, CHAR_LITERAL, STRING_LITERAL, VALUE, TABLE_NAME, ATTRIBUTE_NAME,
-    DATABASE_NAME, WILD_ATTRIBUTE_LIST, ATTRIBUTE_LIST, CONDITION,
-    BOOLEAN_OPERATOR, COMPARATOR
+    COMMAND("<command>"),
+    COMMAND_TYPE("<command type>"),
+    USE("<use>"),
+    CREATE("<create>"),
+    CREATE_DATABASE("<create database>"),
+    CREATE_TABLE("<create table>"),
+    DROP("<drop>"),
+    ALTER("<alter>"),
+    INSERT("<alter>"),
+    SELECT("<select>"),
+    UPDATE("<update>"),
+    DELETE("<delete>"),
+    JOIN("<join>"),
+    DIGIT("[digit]"),
+    UPPER_CASE("[upper case]"),
+    LOWER_CASE("[lower case]"),
+    LETTER("[letter]"),
+    PLAIN_TEXT("[plain text]"),
+    SYMBOL("[symbol]"),
+    SPACE("[space]"),
+    NAME_VALUE_LIST("<name value list>"),
+    NAME_VALUE_PAIR("<name value pair>"),
+    ALTERATION_TYPE("[alteration type]"),
+    VALUE_LIST("<value list>"),
+    DIGIT_SEQUENCE("[digit sequence]"),
+    INTEGER_LITERAL("[integer literal]"),
+    FLOAT_LITERAL("[float literal]"),
+    BOOLEAN_LITERAL("[boolean literal]"),
+    CHAR_LITERAL("[char literal]"),
+    STRING_LITERAL("[string literal]"),
+    VALUE("[value]"),
+    TABLE_NAME("[table name]"),
+    ATTRIBUTE_NAME("[attribtue name]"),
+    DATABASE_NAME("[database name]"),
+    WILD_ATTRIBUTE_LIST("<wild attribute list>"),
+    ATTRIBUTE_LIST("<attribute list>"),
+    CONDITION("<condition>"),
+    BOOLEAN_OPERATOR("[boolean operator]"),
+    COMPARATOR("[comparator]");
+
+    private final String string;
+
+    NodeType(String name) {
+        string = name;
+    }
+
+    @Override
+    public String toString() {
+        return string;
+    }
 }
