@@ -831,13 +831,89 @@ public class Parser {
         current.addChild(new Node(NodeType.CONDITION, current));
         current = current.getLastChild();
         if (tryConditionR()) {
-
+            current = current.getParent();
+            return true;
         }
+        current = current.getParent();
+        current.clearChildren();
+        index = resetIndex;
+        return false;
     }
 
     // <Join> ::= "JOIN " [TableName] " AND " [TableName] " ON " [AttributeName] " AND " [AttributeName]
     private boolean tryJoin() {
+        int resetIndex = index;
+        skipWhiteSpace();
+        if (!substringIsNext("JOIN ")) {
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
 
+        current.addChild(new Node(NodeType.TABLE_NAME, current));
+        current = current.getLastChild();
+        if (!tryPlainText()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        skipWhiteSpace();
+
+        if (!previousCharacterWas(' ') || !substringIsNext("AND ")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+
+        current.addChild(new Node(NodeType.TABLE_NAME, current));
+        current = current.getLastChild();
+        if (!tryPlainText()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        skipWhiteSpace();
+
+        if (!previousCharacterWas(' ') || substringIsNext("ON ")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+
+        current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
+        current = current.getLastChild();
+        if (!tryAttributeName()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        skipWhiteSpace();
+
+        if (!previousCharacterWas(' ') || substringIsNext("AND ")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+
+        current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
+        current = current.getLastChild();
+        if (!tryAttributeName()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        return true;
     }
 
     // [PlainText] ::= [Letter] | [Digit] | [PlainText] [Letter] | [PlainText] [Digit]
@@ -852,6 +928,7 @@ public class Parser {
                 c = command.charAt(index);
             }
             current.setValue(command.substring(startingIndex, index));
+            return true;
         }
     }
 

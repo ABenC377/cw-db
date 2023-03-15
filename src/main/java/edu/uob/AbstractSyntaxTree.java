@@ -11,8 +11,8 @@ public class AbstractSyntaxTree {
     }
 
     private void parseCommand() {
-        Parser fsm = new Parser(root);
-        fsm.populateTree(command);
+        Parser fsm = new Parser(root, command);
+        fsm.populateTree();
     }
 
 }
