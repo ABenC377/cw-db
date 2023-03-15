@@ -198,33 +198,22 @@ public class Parser {
 
     // <Drop> ::= "DROP DATABASE " [DatabaseName] | "DROP TABLE " [TableName]
     private boolean tryDrop() {
+        // Check for the initial DROP keyword
         int resetIndex = index;
         skipWhiteSpace();
-        // Check for either of the keywords
-        boolean isDatabase = substringIsNext("DROP DATABASE ");
-        boolean isTable = substringIsNext("DROP TABLE ");
+        if (!substringIsNext("DROP ")) {
+            index = resetIndex;
+            return false;
+        }
 
-        // If they are there, then look for the plaintext of the database/table name
-        if (isDatabase || isTable) {
+        // Then depending on the next keyword, check for either a database name or a table name
+        skipWhiteSpace();
+        if (substringIsNext("DATABASE ")) {
             skipWhiteSpace();
-            current.addChild((isDatabase) ? new Node(NodeType.DATABASE_NAME, current) : new Node(NodeType.TABLE_NAME, current));
-
-            // >>>>>>
-            current = current.getLastChild();
-            if (tryPlainText()) {
-                current = current.getParent();
-                // <<<<<<
-
-                return true;
-            } else {
-                // If this has failed, then reset and return false
-                current = current.getParent();
-                // <<<<<<
-
-                current.clearChildren();
-                index = resetIndex;
-                return false;
-            }
+            return (checkForGrammar(NodeType.DATABASE_NAME, this::tryPlainText, resetIndex, true));
+        } else if (substringIsNext("TABLE ")) {
+            skipWhiteSpace();
+            return (checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true));
         } else {
             index = resetIndex;
             return false;
@@ -233,6 +222,7 @@ public class Parser {
 
     // <Alter> ::= "ALTER TABLE " [TableName] " " [AlterationType] " " [AttributeName]
     private boolean tryAlter() {
+        // Check for the keywords
         int resetIndex = index;
         skipWhiteSpace();
         if (!substringIsNext("ALTER ")) {
@@ -244,39 +234,24 @@ public class Parser {
             index = resetIndex;
             return false;
         }
+        // Check for a table name
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.TABLE_NAME, current));
-        current = current.getLastChild();
-        if (!tryPlainText()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
             return false;
-        } else {
-            current = current.getParent();
         }
+
+        // Check for a space and the alteration type
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.ALTERATION_TYPE, current));
-        current = current.getLastChild();
-        if (!previousCharacterWas(' ') || !tryAlterationType()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!previousCharacterWas(' ') || !checkForGrammar(NodeType.ALTERATION_TYPE, this::tryAlterationType, resetIndex, true)) {
             return false;
-        } else {
-            current = current.getParent();
         }
+
+        // Check for a space and the attribute name
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
-        current = current.getLastChild();
-        if (!previousCharacterWas(' ') || !tryAttributeName()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!previousCharacterWas(' ')) {
             return false;
         } else {
-            current = current.getParent();
-            return true;
+            return (checkForGrammar(NodeType.ATTRIBUTE_NAME, this::tryAttributeName, resetIndex, true));
         }
     }
 
@@ -295,21 +270,25 @@ public class Parser {
 
     // <Insert> ::= "INSERT INTO " [TableName] " VALUES(" <ValueList> ")"
     private boolean tryInsert() {
+        // Check for keywords
         int resetIndex = index;
         skipWhiteSpace();
-        if (!substringIsNext("INSERT INTO ")) {
+        if (!substringIsNext("INSERT ")) {
             index = resetIndex;
             return false;
         }
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.TABLE_NAME, current));
-        current = current.getLastChild();
-        if (!tryPlainText()) {
-            current = current.getParent();
-            current.clearChildren();
+        if (!substringIsNext("INTO ")) {
             index = resetIndex;
             return false;
         }
+
+        // Check for a table name
+        skipWhiteSpace();
+        if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
+            return false;
+        }
+
         // Need to do a janky check for space because of the possibility of multiple whitespaces before the keyword
         skipWhiteSpace();
         if (!previousCharacterWas(' ') || !substringIsNext("VALUES(")) {
@@ -317,16 +296,14 @@ public class Parser {
             index = resetIndex;
             return false;
         }
+
+        // Check for a values list
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.VALUE_LIST, current));
-        current = current.getLastChild();
-        if (!tryValueList()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.VALUE_LIST, this::tryValueList, resetIndex, true)) {
             return false;
         }
-        current = current.getParent();
+
+        // Finally, check for the closing parenthesis
         skipWhiteSpace();
         if (!substringIsNext(")")) {
             current.clearChildren();
@@ -338,28 +315,25 @@ public class Parser {
 
     // <ValueList> ::= [Value] | [Value] "," <ValueList>
     private boolean tryValueList() {
+        // Check for an opening value
         int resetIndex = index;
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.VALUE, current));
-        current = current.getLastChild();
-        if (tryValue()) {
-            current = current.getParent();
-        } else {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.VALUE, this::tryValue, resetIndex, true)) {
             return false;
         }
+
+        // Then do a while loop to check for additional values
+        // -- careful to only reset the most resent child on a failure
         resetIndex = index;
         skipWhiteSpace();
-        if (substringIsNext(",")) {
-            skipWhiteSpace();
-            if (tryValueList()) {
+        while (substringIsNext(",")) {
+            if (!checkForGrammar(NodeType.VALUE, this::tryValue, resetIndex, false)) {
                 return true;
             }
+            resetIndex = index;
+            skipWhiteSpace();
         }
-        index = resetIndex;
-        return false;
+        return true;
     }
 
     // [Value] ::= "'" [StringLiteral] | [BooleanLiteral] | [FloatLiteral] | [IntegerLiteral] | "NULL"
