@@ -65,9 +65,14 @@ public class ParserTests {
     @Test
     public void testSelectSimple() {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("SELECT name, country FROM table;");
-        System.out.println("testing <select>");
-        System.out.println(ast);
-        assertTrue(true);
+        assertEquals("<command>\n" +
+                "└── <select>\n" +
+                "    ├── <wild attribute list>\n" +
+                "    │   ├── [attribute name]\n" +
+                "    │   │   └── [plain text]\n" +
+                "    │   └── [attribute name]\n" +
+                "    │       └── [plain text]\n" +
+                "    └── [table name]\n", ast.toString());
     }
     @Test
     public void testSelectWhere() {

@@ -5,6 +5,7 @@ GO THROUGH AND MAKE SURE THAT IT ALLOWS FOR MULTIPLE SPACES BETWEEN WORDS.  UFF
  */
 
 
+import java.util.function.Supplier;
 
 public class Parser {
     private Node current;
@@ -70,32 +71,19 @@ public class Parser {
     // <Use> ::= "USE " [DatabaseName]
     private boolean tryUse() {
         // save the index, so we can reset it before returning false
-        int originalIndex = index;
+        int resetIndex = index;
 
         // check for the keyword
         skipWhiteSpace();
         if (!substringIsNext("USE ")) {
-            index = originalIndex;
+            index = resetIndex;
             return false;
         }
 
         // set up and move to a new child node for the potential database name
         current.setType(NodeType.USE);
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.DATABASE_NAME, current));
-        current = current.getLastChild();
-
-        // ________ To think about ___________
-        // Can I use Supplier<T> to save on the repeated code below (in each of the try__() methods)
-        if (tryPlainText()) {
-            current = current.getParent();
-            return true;
-        } else {
-            current = current.getParent();
-            current.popChild();
-            index = originalIndex;
-            return false;
-        }
+        return checkForGrammar(NodeType.DATABASE_NAME, this::tryPlainText, resetIndex, true);
     }
 
     // <Create> ::= <CreateDatabase> | <CreateTable>
@@ -105,129 +93,107 @@ public class Parser {
 
     // <CreateDatabase> ::= "CREATE DATABASE " [DatabaseName]
     private boolean tryCreateDatabase() {
-        int originalIndex = index;
-        skipWhiteSpace();
         // Check for the key word sequence
-        if (!substringIsNext("CREATE DATABASE ")) {
-            index = originalIndex;
+        int resetIndex = index;
+        skipWhiteSpace();
+        if (!substringIsNext("CREATE ")) {
+            index = resetIndex;
             return false;
         }
-        // Check for the database name
+        if (!substringIsNext("DATABASE ")) {
+            index = resetIndex;
+            return false;
+        }
         current.setType(NodeType.CREATE_TABLE);
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.DATABASE_NAME, current));
-        current = current.getLastChild();
-        if (!tryPlainText()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = originalIndex;
-            return false;
-        } else {
-            current = current.getParent();
-            return true;
-        }
+
+        // check for the database name
+        return checkForGrammar(NodeType.DATABASE_NAME, this::tryPlainText, resetIndex, true);
     }
 
     // <AttributeList> ::= [AttributeName] | [AttributeName] "," <AttributeList>
     private boolean tryAttributeList() {
+        // check for at least one Attribute name
         int resetIndex = index;
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
-        current = current.getLastChild();
-        if (tryAttributeName()) {
-            current = current.getParent();
-        } else {
-            current = current.getParent();
-            current.popChild();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.ATTRIBUTE_NAME, this::tryAttributeName, resetIndex, true)) {
             return false;
         }
+
+        // Now we have that, keep on checking for additional attribute names
         resetIndex = index;
         skipWhiteSpace();
-        if (substringIsNext(",")) {
+        while (substringIsNext(",")) {
             skipWhiteSpace();
-            if (tryAttributeList()) {
+            if (!checkForGrammar(NodeType.ATTRIBUTE_NAME, this::tryAttributeName, resetIndex, true)) {
                 return true;
             }
+            resetIndex = index;
+            skipWhiteSpace();
         }
+
+        // return true regardless
         index = resetIndex;
-        return false;
+        return true;
     }
 
     // [AttributeName] ::= [PlainText] | [TableName] "." [PlainText]
     private boolean tryAttributeName() {
+        // Check for a first bit of plain text (this could be the sole plain text or the table name, we will
+        // deal with the distinction later
         int resetIndex = index;
-        current.addChild(new Node(NodeType.PLAIN_TEXT, current));
-        current = current.getLastChild();
-
-        // Check for at least one plain text instance.  If not there then clean up and return false
-        if (!tryPlainText()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.PLAIN_TEXT, this::tryPlainText, resetIndex, true)) {
             return false;
         }
 
-        // If there is no full stop, then we can return true with the simple PlainText AttributeName
-        if (!substringIsNext(".")) {
-            current = current.getParent();
-            return true;
-        } else {
-            resetIndex = index;
-            current.setType(NodeType.TABLE_NAME);
-            current = current.getParent();
+        // If there is a full stop and another plain text we need to change the type of teh first child
+        // Otherwise, we just return the current 1-child AttributeName node (hence the false passed into the
+        // completeReset parameter in checkForGrammar() below)
+        resetIndex = index;
+        if (substringIsNext(".") && checkForGrammar(NodeType.PLAIN_TEXT, this::tryPlainText, resetIndex, false)) {
+            current.getChild(0).setType(NodeType.TABLE_NAME);
         }
 
-        current.addChild(new Node(NodeType.PLAIN_TEXT, current));
-        current = current.getLastChild();
-        if (tryPlainText()) {
-            current = current.getParent();
-        } else {
-            current = current.getParent();
-            current.popChild();
-            index = resetIndex;
-        }
         return true;
-
     }
 
     // <CreateTable> ::= "CREATE TABLE " [TableName] | "CREATE TABLE " [TableName] "(" <AttributeList> ")"
     private boolean tryCreateTable() {
+        // Check for the key word sequence
         int resetIndex = index;
         skipWhiteSpace();
-        // Check for the key word sequence
-        if (!substringIsNext("CREATE TABLE ")) {
+        if (!substringIsNext("CREATE ")) {
             index = resetIndex;
             return false;
         }
-
-        // Check for the table name
+        if (!substringIsNext("TABLE ")) {
+            index = resetIndex;
+            return false;
+        }
         current.setType(NodeType.CREATE_TABLE);
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.TABLE_NAME, current));
-        current = current.getLastChild();
-        if (!tryPlainText()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+
+        // Check for the table name
+        if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
             return false;
-        } else {
-            current = current.getParent();
         }
 
-        // Check for a possible attribute list
-        int intermediateIndex = index;
-        current.addChild(new Node(NodeType.ATTRIBUTE_LIST, current));
-        current = current.getLastChild();
-        if (substringIsNext("(") && tryAttributeList() && substringIsNext(")")) {
-            current = current.getParent();
-        } else {
-            index = intermediateIndex;
-            current = current.getParent();
+        // Check for a possible attribute list.  This requires: 1) checking for opening parenthesis;
+        // 2) checking for an attribute list; and 3) checking for a closing parenthesis
+        resetIndex = index;
+        if (!substringIsNext("(")) {
+            return true;
+        }
+        skipWhiteSpace();
+        if (!checkForGrammar(NodeType.ATTRIBUTE_LIST, this::tryAttributeList, resetIndex, false)) {
+            return true;
+        }
+        skipWhiteSpace();
+        if (!substringIsNext(")")) {
+            index = resetIndex;
             current.popChild();
         }
         return true;
-
     }
 
     // <Drop> ::= "DROP DATABASE " [DatabaseName] | "DROP TABLE " [TableName]
@@ -990,6 +956,25 @@ public class Parser {
 
 
     /*____________________HELPER FUNCTIONS BELOW________________________*/
+    private boolean checkForGrammar(NodeType type, Supplier<Boolean> tryFunc, int resetIndex, boolean completeReset) {
+        current.addChild(new Node(type, current));
+        current = current.getLastChild();
+        if (!tryFunc.get()) {
+            current = current.getParent();
+            if (completeReset) {
+                current.clearChildren();
+            } else {
+                current.popChild();
+            }
+            index = resetIndex;
+            return false;
+        } else {
+            current = current.getParent();
+            return true;
+        }
+    }
+
+
     private void skipWhiteSpace() {
         while (Character.isWhitespace(command.charAt(index))) {
             index++;
