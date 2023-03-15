@@ -54,4 +54,26 @@ public class ParserTests {
                 "        ├── [table name]\n" +
                 "        └── [plain text]\n", ast.toString());
     }
+
+    @Test
+    public void testInsert() {
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("INSERT INTO table VALUES('string literal',TRUE,3);");
+        System.out.println("testing <insert>");
+        System.out.println(ast);
+        assertTrue(true);
+    }
+    @Test
+    public void testSelectSimple() {
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("SELECT name, country FROM table;");
+        System.out.println("testing <select>");
+        System.out.println(ast);
+        assertTrue(true);
+    }
+    @Test
+    public void testSelectWhere() {
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("SELECT * FROM table WHERE (country LIKE 'rance');");
+        System.out.println("testing <select (where)>");
+        System.out.println(ast);
+        assertTrue(true);
+    }
 }
