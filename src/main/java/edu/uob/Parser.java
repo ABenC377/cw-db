@@ -501,10 +501,157 @@ public class Parser {
     // <Select> ::= "SELECT " <WildAttribList> " FROM " [TableName] | "SELECT " <WildAttribList> " FROM " [TableName] " WHERE " <Condition>
     private boolean trySelect() {
         int resetIndex = index;
+        skipWhiteSpace();
         if (!substringIsNext("SELECT ")) {
             return false;
         }
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.WILD_ATTRIBUTE_LIST, current));
+        current = current.getLastChild();
+        if (!tryWildAttributeList()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        if (!substringIsNext(" ")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        skipWhiteSpace();
+        if (!substringIsNext("FROM ")) {
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current.addChild(new Node(NodeType.TABLE_NAME, current));
+        current = current.getLastChild();
+        if (!tryPlainText()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        resetIndex = index;
+        if (substringIsNext(" ")) {
+            skipWhiteSpace();
+            current.addChild(new Node(NodeType.CONDITION, current));
+            current = current.getLastChild();
+            if (substringIsNext("WHERE ") && tryConditionR()) {
+                current = current.getParent();
+            } else {
+                current = current.getParent();
+                current.popChild();
+                index = resetIndex;
+            }
+        }
+        return true;
+    }
 
+    // <Condition> ::= "(" <Condition> [BoolOperator] <Condition> ")" | <Condition> [BoolOperator] <Condition> | "(" [AttributeName] [Comparator] [Value] ")" | [AttributeName] [Comparator] [Value]
+    // The second option for <condition> is susceptible to a left-handed recursion infinite loop.
+    // Therefore, I have two tryCondition methods: tryConditionR() (which allows all four types of <condition>;
+    // and tryConditionNR() (which allows only the later two types of <condition>, and thus avoids the risk of infinite
+    // loops)
+    private boolean tryConditionR() {
+        int resetIndex = index;
+        skipWhiteSpace();
+        boolean inBrackets = false;
+        if (!substringIsNext("(")) {
+            inBrackets = true;
+            index++;
+        }
+        skipWhiteSpace();
+        current.addChild(new Node(current));
+        current = current.getLastChild();
+        if (tryConditionNR()) {
+            current.setType(NodeType.CONDITION);
+            current = current.getParent();
+            skipWhiteSpace();
+            current.addChild(new Node(NodeType.BOOLEAN_OPERATOR, current));
+            current = current.getLastChild();
+            if (!tryBoolOperator()) {
+                current = current.getParent();
+                current.clearChildren();
+                index = resetIndex;
+                return false;
+            }
+            current = current.getParent();
+            skipWhiteSpace();
+            current.addChild(new Node(NodeType.CONDITION, current));
+            current = current.getLastChild();
+            if (!tryConditionR()) {
+                current = current.getParent();
+                current.clearChildren();
+                index = resetIndex;
+                return false;
+            }
+            current = current.getParent();
+            return true;
+        } else if (tryConditionNR()) { // !!!This is the same as tryConditionNR()!!!
+            if (inBrackets && !substringIsNext(")")) {
+                current.clearChildren();
+                index = resetIndex;
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+    }
+
+    private boolean tryConditionNR() {
+        int resetIndex = index;
+        skipWhiteSpace();
+        boolean inBrackets = false;
+        if (!substringIsNext("(")) {
+            inBrackets = true;
+            index++;
+        }
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
+        current = current.getLastChild();
+        if (!tryAttributeName()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.COMPARATOR, current));
+        current = current.getLastChild();
+        if (!tryComparator()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        skipWhiteSpace();
+        current.addChild(new Node(NodeType.VALUE, current));
+        current = current.getLastChild();
+        if (!tryValue()) {
+            current = current.getParent();
+            current.clearChildren();
+            index = resetIndex;
+            return false;
+        }
+        current = current.getParent();
+        return true;
+    }
+
+    // [Comparator] ::= "==" | ">" | "<" | ">=" | "<=" | "!=" | " LIKE "
+    private boolean tryComparator() {
+        return (substringIsNext("==") || substringIsNext("==") || substringIsNext("==") || substringIsNext("==")
+                || substringIsNext("==") || substringIsNext("==") || substringIsNext("=="));
     }
 
     // <Update> ::= "UPDATE " [TableName] " SET " <NameValueList> " WHERE " <Condition>
