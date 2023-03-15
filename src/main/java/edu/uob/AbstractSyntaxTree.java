@@ -19,21 +19,27 @@ public class AbstractSyntaxTree {
 
     @Override
     public String toString() {
+        System.out.println("Number of children to the root node: " + root.getNumberChildren());
         StringBuilder buffer = new StringBuilder(500);
+        if (root.getNumberChildren() == 0) {
+            return "Empty Tree";
+        }
         print(buffer, "", "", root);
         return buffer.toString();
     }
 
     private void print(StringBuilder buffer, String prefix, String childrenPrefix, Node rt) {
         buffer.append(prefix);
-        buffer.append(rt.getType().toString());
+        buffer.append((rt.getType() != null) ? rt.getType().toString() : "NULL");
         buffer.append('\n');
         for (Iterator<Node> childIterator = rt.getChildren().iterator(); childIterator.hasNext();) {
             Node next = childIterator.next();
-            if (childIterator.hasNext()) {
-                print(buffer, childrenPrefix + "├── ", childrenPrefix + "│   ", next);
-            } else {
-                print(buffer, childrenPrefix + "└── ", childrenPrefix + "    ", next);
+            if (next != null) {
+                if (childIterator.hasNext()) {
+                    print(buffer, childrenPrefix + "├── ", childrenPrefix + "│   ", next);
+                } else {
+                    print(buffer, childrenPrefix + "└── ", childrenPrefix + "    ", next);
+                }
             }
         }
     }

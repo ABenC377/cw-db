@@ -7,7 +7,7 @@ public enum NodeType {
     USE("<use>"),
     CREATE("<create>"),
     CREATE_DATABASE("<create database>"),
-    CREATE_TABLE("<create table"),
+    CREATE_TABLE("<create table>"),
     DROP("<drop>"),
     ALTER("<alter>"),
     INSERT("<alter>"),

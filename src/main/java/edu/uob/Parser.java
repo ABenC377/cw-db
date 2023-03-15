@@ -23,11 +23,41 @@ public class Parser {
         current = current.getLastChild();
 
         // checking that there is a valid command type
-        if (tryUse() || tryCreate() || tryDrop() || tryAlter() || tryInsert() ||
-                trySelect() || tryUpdate() || tryDelete() || tryJoin()) {
-            // moving back up to the parent before returning to ensure we don't drift
-            // down the tree
+        if (tryUse()) {
             current = current.getParent();
+            current.setType(NodeType.USE);
+            return true;
+        } else if (tryCreate()) {
+            current = current.getParent();
+            current.setType(NodeType.CREATE);
+            return true;
+        } else if (tryDrop()) {
+            current = current.getParent();
+            current.setType(NodeType.DROP);
+            return true;
+        } else if (tryAlter()) {
+            current = current.getParent();
+            current.setType(NodeType.ALTER);
+            return true;
+        } else if (tryInsert()) {
+            current = current.getParent();
+            current.setType(NodeType.INSERT);
+            return true;
+        } else if (trySelect()) {
+            current = current.getParent();
+            current.setType(NodeType.SELECT);
+            return true;
+        } else if (tryUpdate()) {
+            current = current.getParent();
+            current.setType(NodeType.UPDATE);
+            return true;
+        } else if (tryDelete()) {
+            current = current.getParent();
+            current.setType(NodeType.DELETE);
+            return true;
+        } else if (tryJoin()) {
+            current = current.getParent();
+            current.setType(NodeType.JOIN);
             return true;
         } else {
             // getting rid of the impossible command type node before returning
@@ -215,7 +245,7 @@ public class Parser {
             }
             // If this has failed, then reset and return false
             current = current.getParent();
-            current.popChild();
+            current.clearChildren();
         }
         index = resetIndex;
         return false;

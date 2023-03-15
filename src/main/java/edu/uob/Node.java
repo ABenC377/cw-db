@@ -57,16 +57,12 @@ public class Node {
     }
     public void popChild() {
         if (!(children.isEmpty())) {
-            return children.remove(children.size() - 1);
-        } else {
-            return null;
+            children.remove(children.size() - 1);
         }
     }
     public void popChild(int index) {
         if (index < children.size() && index >= 0) {
-            return children.remove(index);
-        } else {
-            return null;
+            children.remove(index);
         }
     }
     public int getNumberChildren() {

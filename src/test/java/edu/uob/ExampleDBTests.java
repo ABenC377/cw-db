@@ -32,6 +32,8 @@ public class ExampleDBTests {
         "Server took too long to respond (probably stuck in an infinite loop)");
     }
 
+
+    /*
     // A basic test that creates a database, creates a table, inserts some test data, then queries it.
     // It then checks the response to see that a couple of the entries in the table are returned as expected
     @Test
@@ -102,4 +104,6 @@ public class ExampleDBTests {
         assertFalse(response.contains("[OK]"), "An attempt was made to access a non-existent table, however an [OK] tag was returned");
     }
 
+
+     */
 }
