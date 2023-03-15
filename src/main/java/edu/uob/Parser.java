@@ -425,18 +425,19 @@ public class Parser {
         return true;
     }
 
-    // [StringLiteral] ::= "'" | [CharLiteral] [StringLiteral]
+    // [StringLiteral]   ::=  "'" | [CharLiteral] [StringLiteral]
     private boolean tryStringLiteral() {
-        int resetIndex = index;
-        StringBuilder value = new StringBuilder();
-        while (index < command.length() && isCharLiteral()) {
-            value.append(command.charAt(index));
+        // A bit janky, but needed to start from a clean sheet when we get to a string literal
+        if (previousCharacterWas('\'')) {
+            current.setValue("");
         }
-        if ((index < command.length()) && (command.charAt(index) == '\'')) {
-            current.setValue(String.valueOf(value));
+
+        if (substringIsNext("'")) {
+            return true;
+        } else if (isCharLiteral()) {
+            tryStringLiteral();
             return true;
         } else {
-            index = resetIndex;
             return false;
         }
     }
@@ -444,55 +445,47 @@ public class Parser {
     private boolean isCharLiteral() {
         char c = command.charAt(index++); // !!!Check that the "++" is applied after the charAt() method!!!
         String acceptedChars = " !#$%&()*+,-./:;>=<?@[\\]^_`{}~";
-        return (isDigit(c) || isLetter(c) || acceptedChars.contains(String.valueOf(c)));
+        if (isDigit(c) || isLetter(c) || acceptedChars.contains(String.valueOf(c))) {
+            current.setValue(current.getValue() + c);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     // <Select> ::= "SELECT " <WildAttribList> " FROM " [TableName] | "SELECT " <WildAttribList> " FROM " [TableName] " WHERE " <Condition>
     private boolean trySelect() {
+        // Look for keyword
         int resetIndex = index;
         skipWhiteSpace();
         if (!substringIsNext("SELECT ")) {
             return false;
         }
+        // Check for a wild attribute list
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.WILD_ATTRIBUTE_LIST, current));
-        current = current.getLastChild();
-        if (!tryWildAttributeList()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.WILD_ATTRIBUTE_LIST, this::tryWildAttributeList, resetIndex, true)) {
             return false;
         }
-        current = current.getParent();
+        // Check for the next keyword
         skipWhiteSpace();
         if (!previousCharacterWas(' ') || !substringIsNext("FROM ")) {
             current.clearChildren();
             index = resetIndex;
             return false;
         }
-        current.addChild(new Node(NodeType.TABLE_NAME, current));
-        current = current.getLastChild();
-        if (!tryPlainText()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        // Check for table name
+        if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
             return false;
         }
-        current = current.getParent();
-
         // Check for an optional WHERE statement
         resetIndex = index;
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.CONDITION, current));
-        current = current.getLastChild();
-        if (previousCharacterWas(' ') && substringIsNext("WHERE ") && tryConditionR()) {
-            current = current.getParent();
-        } else {
-            current = current.getParent();
-            current.popChild();
-            index = resetIndex;
+        if (!previousCharacterWas(' ') || !substringIsNext("WHERE ")) {
+            return false;
         }
-        return true;
+        // Check for condition
+        skipWhiteSpace();
+        return checkForGrammar(NodeType.CONDITION, this::tryConditionR, resetIndex, false);
     }
 
 

@@ -33,7 +33,7 @@ public class AbstractSyntaxTree {
 
     private void print(StringBuilder buffer, String prefix, String childrenPrefix, Node rt) {
         buffer.append(prefix);
-        buffer.append((rt.getType() != null) ? rt.getType().toString() : "NULL");
+        buffer.append((rt.getType() != null) ? (rt.getType().toString() + ((rt.getValue() != null) ? ("(value = " + rt.getValue() + ")") : "") ) : "NULL");
         buffer.append('\n');
         for (Iterator<Node> childIterator = rt.getChildren().iterator(); childIterator.hasNext();) {
             Node next = childIterator.next();
