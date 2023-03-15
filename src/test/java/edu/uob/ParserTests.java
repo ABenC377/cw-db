@@ -58,9 +58,16 @@ public class ParserTests {
     @Test
     public void testInsert() {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("INSERT INTO table VALUES('string literal',TRUE,3);");
-        System.out.println("testing <insert>");
-        System.out.println(ast);
-        assertTrue(true);
+        assertEquals("<command>\n" +
+                "└── <insert>\n" +
+                "    ├── [table name]\n" +
+                "    └── <value list>\n" +
+                "        ├── [value]\n" +
+                "        │   └── [string literal]\n" +
+                "        ├── [value]\n" +
+                "        │   └── [boolean literal]\n" +
+                "        └── [value]\n" +
+                "            └── [integer literal]\n", ast.toString());
     }
     @Test
     public void testSelectSimple() {

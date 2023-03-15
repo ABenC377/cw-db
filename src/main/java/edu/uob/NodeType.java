@@ -10,7 +10,7 @@ public enum NodeType {
     CREATE_TABLE("<create table>"),
     DROP("<drop>"),
     ALTER("<alter>"),
-    INSERT("<alter>"),
+    INSERT("<insert>"),
     SELECT("<select>"),
     UPDATE("<update>"),
     DELETE("<delete>"),

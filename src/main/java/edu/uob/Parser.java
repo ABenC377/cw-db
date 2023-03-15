@@ -340,44 +340,19 @@ public class Parser {
     // I have changed the way the grammar is described for the first of these, as it boils down to the same but is
     // easier to implement
     private boolean tryValue() {
+        // Start by checking for a keyword to flag NULL or string literal
+        // Then run through checking for the other types of value
         int resetIndex = index;
         if (substringIsNext("NULL")) {
             current.setValue("NULL");
             return true;
+        } else if (substringIsNext("'")) {
+            return checkForGrammar(NodeType.STRING_LITERAL, this::tryStringLiteral, resetIndex, true);
+        } else {
+            return (checkForGrammar(NodeType.BOOLEAN_LITERAL, this::tryBooleanLiteral, resetIndex, true) ||
+                    checkForGrammar(NodeType.FLOAT_LITERAL, this::tryFloatLiteral, resetIndex, true) ||
+                    checkForGrammar(NodeType.INTEGER_LITERAL, this::tryIntegerLiteral, resetIndex, true));
         }
-        if (substringIsNext("'")) {
-            current.addChild(new Node(NodeType.STRING_LITERAL, current));
-            current = current.getLastChild();
-            if (tryStringLiteral()) {
-                current = current.getParent();
-                return true;
-            } else {
-                current = current.getParent();
-                current.clearChildren();
-                index = resetIndex;
-                return false;
-            }
-        }
-        current.addChild(new Node(current));
-        current = current.getLastChild();
-        if (tryBooleanLiteral()) {
-            current.setType(NodeType.BOOLEAN_LITERAL);
-            current = current.getParent();
-            return true;
-        } else if (tryFloatLiteral()) { // It is important that float is before integer here, as tryInteger() would
-                                        // return true for a float, but tryFloat() would not return true for an int
-            current.setType(NodeType.FLOAT_LITERAL);
-            current = current.getParent();
-            return true;
-        } else if (tryIntegerLiteral()) {
-            current.setType(NodeType.INTEGER_LITERAL);
-            current = current.getParent();
-            return true;
-        }
-        current = current.getParent();
-        current.clearChildren();
-        index = resetIndex;
-        return false;
     }
 
     // [BooleanLiteral] ::= "TRUE" | "FALSE"
@@ -397,37 +372,34 @@ public class Parser {
     private boolean tryFloatLiteral() {
         int resetIndex = index;
         StringBuilder value = new StringBuilder();
+        // handle +/- signs
         if (substringIsNext("+")) {
-            index++;
-        } else if (substringIsNext("-")) {
-            index++;
-            value.append("-");
-        }
-        char c = command.charAt(index);
-        if (!isDigit(c)) {
+        } else if (substringIsNext("-")) { value.append("-"); }
+        // Handle the >1 digits
+        if (!isDigit(command.charAt(index))) {
             index = resetIndex;
             return false;
         }
-        while (isDigit(c)) {
-            value.append(c);
+        while (isDigit(command.charAt(index))) {
+            value.append(command.charAt(index));
             index++;
-            c = command.charAt(index);
         }
+        // Handle the decimal point
         if (!substringIsNext(".")) {
             index = resetIndex;
             return false;
         }
         value.append('.');
-        c = command.charAt(index);
-        if (!isDigit(c)) {
+        // Handle the <1 digits
+        if (!isDigit(command.charAt(index))) {
             index = resetIndex;
             return false;
         }
-        while (isDigit(c)) {
-            value.append(c);
+        while (isDigit(command.charAt(index))) {
+            value.append(command.charAt(index));
             index++;
-            c = command.charAt(index);
         }
+        // Set the value
         current.setValue(value.toString());
         return true;
     }
@@ -436,34 +408,35 @@ public class Parser {
     private boolean tryIntegerLiteral() {
         int resetIndex = index;
         StringBuilder value = new StringBuilder();
+        // handle +/- signs
         if (substringIsNext("+")) {
-            index++;
-        } else if (substringIsNext("-")) {
-            index++;
-            value.append("-");
-        }
-        char c = command.charAt(index);
-        if (!isDigit(c)) {
+        } else if (substringIsNext("-")) { value.append("-"); }
+        // Handle the digits
+        if (!isDigit(command.charAt(index))) {
             index = resetIndex;
             return false;
         }
-        while (isDigit(c)) {
-            value.append(c);
+        while (isDigit(command.charAt(index))) {
+            value.append(command.charAt(index));
             index++;
-            c = command.charAt(index);
         }
+        // Set the value
         current.setValue(value.toString());
         return true;
     }
 
-    // [StringLiteral]   ::=  "'" | [CharLiteral] [StringLiteral]
+    // [StringLiteral] ::= "'" | [CharLiteral] [StringLiteral]
     private boolean tryStringLiteral() {
-        if (substringIsNext("'")) {
-            return true;
-        } else if (isCharLiteral()) {
-            tryStringLiteral();
+        int resetIndex = index;
+        StringBuilder value = new StringBuilder();
+        while (index < command.length() && isCharLiteral()) {
+            value.append(command.charAt(index));
+        }
+        if ((index < command.length()) && (command.charAt(index) == '\'')) {
+            current.setValue(String.valueOf(value));
             return true;
         } else {
+            index = resetIndex;
             return false;
         }
     }
@@ -933,7 +906,10 @@ public class Parser {
     private boolean checkForGrammar(NodeType type, Supplier<Boolean> tryFunc, int resetIndex, boolean completeReset) {
         current.addChild(new Node(type, current));
         current = current.getLastChild();
-        if (!tryFunc.get()) {
+        if (tryFunc.get()) {
+            current = current.getParent();
+            return true;
+        } else {
             current = current.getParent();
             if (completeReset) {
                 current.clearChildren();
@@ -942,9 +918,6 @@ public class Parser {
             }
             index = resetIndex;
             return false;
-        } else {
-            current = current.getParent();
-            return true;
         }
     }
 
