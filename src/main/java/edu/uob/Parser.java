@@ -481,11 +481,16 @@ public class Parser {
         resetIndex = index;
         skipWhiteSpace();
         if (!previousCharacterWas(' ') || !substringIsNext("WHERE ")) {
-            return false;
+            index = resetIndex;
+            return true;
         }
         // Check for condition
         skipWhiteSpace();
-        return checkForGrammar(NodeType.CONDITION, this::tryConditionR, resetIndex, false);
+        if (checkForGrammar(NodeType.CONDITION, this::tryConditionR, resetIndex, false)) {
+            return true;
+        } else {
+            return true;
+        }
     }
 
 
