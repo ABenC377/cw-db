@@ -644,28 +644,16 @@ public class Parser {
     private boolean tryNameValueList() {
         int resetIndex = index;
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.NAME_VALUE_PAIR, current));
-        current = current.getLastChild();
-        if (!tryNameValuePair()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.NAME_VALUE_PAIR, this::tryNameValuePair, resetIndex, true)) {
             return false;
         }
-        current = current.getParent();
 
         // Check for optional additional NameValuePairs
         resetIndex = index;
         while (substringIsNext(",")) {
-            current.addChild(new Node(NodeType.NAME_VALUE_PAIR, current));
-            current = current.getLastChild();
-            if (!tryNameValuePair()) {
-                current = current.getParent();
-                current.popChild();
+            if (checkForGrammar(NodeType.NAME_VALUE_PAIR, this::tryNameValuePair, resetIndex, false)) {
                 index = resetIndex;
             }
-            current = current.getParent();
-            resetIndex = index;
         }
         return true;
     }
@@ -674,15 +662,9 @@ public class Parser {
     private boolean tryNameValuePair() {
         int resetIndex = index;
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
-        current = current.getLastChild();
-        if (!tryAttributeName()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.ATTRIBUTE_NAME, this::tryAttributeName, resetIndex, true)) {
             return false;
         }
-        current = current.getParent();
         skipWhiteSpace();
         if (!substringIsNext("=")) {
             current.clearChildren();
@@ -690,16 +672,7 @@ public class Parser {
             return false;
         }
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.VALUE, current));
-        current = current.getLastChild();
-        if (!tryValue()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
-        current = current.getParent();
-        return true;
+        return checkForGrammar(NodeType.VALUE, this::tryValue, resetIndex, true);
     }
 
     // <Delete> ::= "DELETE FROM " [TableName] " WHERE " [Condition]
