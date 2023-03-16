@@ -59,12 +59,12 @@ public class DBServer {
             try {
                 ast = new AbstractSyntaxTree(currentCommand);
             } catch (IOException err) {
-                System.out.println(err.getMessage());
+                return err.getMessage();
             }
             try {
                 interpreter.interpret(ast);
             } catch (IOException err) {
-                System.out.println(err.getMessage());
+                return err.getMessage();
             }
         }
         /*

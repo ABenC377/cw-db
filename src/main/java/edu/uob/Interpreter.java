@@ -7,32 +7,51 @@ public class Interpreter {
     Database db;
     public Interpreter() {}
 
-    public boolean interpret(AbstractSyntaxTree tree) throws IOException {
+    public void interpret(AbstractSyntaxTree tree) throws IOException {
         db = new Database();
         if (tree.getRoot() == null || tree.getRoot().getType() != NodeType.COMMAND) {
-            return false;
+            throw new IOException("[ERROR] - invalid query");
         }
         switch (tree.getRoot().getLastChild().getType()) {
             case USE:
-                return handleUse(tree.getRoot().getLastChild());
+                handleUse(tree.getRoot().getLastChild());
+                break;
             case CREATE:
-                return handleCreate(tree.getRoot().getLastChild());
+                handleCreate(tree.getRoot().getLastChild());
+                break;
             case DROP:
-                return handleDrop(tree.getRoot().getLastChild());
+                handleDrop(tree.getRoot().getLastChild());
+                break;
             case ALTER:
-                return handleAlter(tree.getRoot().getLastChild());
+                handleAlter(tree.getRoot().getLastChild());
+                break;
             case INSERT:
+                handleInsert(tree.getRoot().getLastChild());
                 break;
             case SELECT:
+                handleSelect(tree.getRoot().getLastChild());
                 break;
             case UPDATE:
+                handleUpdate(tree.getRoot().getLastChild());
                 break;
             case DELETE:
+                handleDelete(tree.getRoot().getLastChild());
                 break;
             case JOIN:
+                handleJoin(tree.getRoot().getLastChild());
                 break;
             default:
-                return false;
+                throw new IOException("[ERROR] - invalid query");
+                break;
+        }
+    }
+
+    private void handleUse(Node node) throws IOException {
+        if (node.getNumberChildren() > 1 || node.getLastChild().getType() != NodeType.DATABASE_NAME) {
+            throw new IOException("[ERROR] - <use> should have one (and only one) argument, which is a database name");
+        } else {
+            String dbName = node.getLastChild().getValue();
+
         }
     }
 }
