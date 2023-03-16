@@ -611,31 +611,28 @@ public class Parser {
     // <Update> ::= "UPDATE " [TableName] " SET " <NameValueList> " WHERE " <Condition>
     private boolean tryUpdate() {
         int resetIndex = index;
-        skipWhiteSpace();
-        if (!substringIsNext("UPDATE ")) {
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, false, false, "UPDATE ")) {
             return false;
         }
+
         skipWhiteSpace();
         if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
             return false;
         }
-        skipWhiteSpace();
-        if (!previousCharacterWas(' ') || !substringIsNext("SET ")) {
-            current.clearChildren();
-            index = resetIndex;
+
+        if (!checkForStrings(resetIndex, true, true, "SET ")) {
             return false;
         }
+
         skipWhiteSpace();
         if (!checkForGrammar(NodeType.NAME_VALUE_LIST, this::tryNameValueList, resetIndex, true)) {
             return false;
         }
-        skipWhiteSpace();
-        if (!previousCharacterWas(' ') || !substringIsNext("WHERE ")) {
-            current.clearChildren();
-            index = resetIndex;
+
+        if (!checkForStrings(resetIndex, true, true, "WHERE ")) {
             return false;
         }
+
         skipWhiteSpace();
         return checkForGrammar(NodeType.CONDITION, this::tryCondition, resetIndex, true);
     }
@@ -665,12 +662,11 @@ public class Parser {
         if (!checkForGrammar(NodeType.ATTRIBUTE_NAME, this::tryAttributeName, resetIndex, true)) {
             return false;
         }
-        skipWhiteSpace();
-        if (!substringIsNext("=")) {
-            current.clearChildren();
-            index = resetIndex;
+
+        if (!checkForStrings(resetIndex, true, false, "=")) {
             return false;
         }
+
         skipWhiteSpace();
         return checkForGrammar(NodeType.VALUE, this::tryValue, resetIndex, true);
     }
@@ -678,26 +674,19 @@ public class Parser {
     // <Delete> ::= "DELETE FROM " [TableName] " WHERE " [Condition]
     private boolean tryDelete() {
         int resetIndex = index;
-        skipWhiteSpace();
-        if (!substringIsNext("DELETE ")) {
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, false, false, "DELETE ", "FROM ")) {
             return false;
         }
-        skipWhiteSpace();
-        if (!substringIsNext("FROM ")) {
-            index = resetIndex;
-            return false;
-        }
+
         skipWhiteSpace();
         if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
             return false;
         }
-        skipWhiteSpace();
-        if (!previousCharacterWas(' ') || !substringIsNext("WHERE ")) {
-            current.clearChildren();
-            index = resetIndex;
+
+        if (!checkForStrings(resetIndex, true, true, "WHERE ")) {
             return false;
         }
+
         skipWhiteSpace();
         return checkForGrammar(NodeType.CONDITION, this::tryCondition, resetIndex, true);
     }
@@ -705,77 +694,38 @@ public class Parser {
     // <Join> ::= "JOIN " [TableName] " AND " [TableName] " ON " [AttributeName] " AND " [AttributeName]
     private boolean tryJoin() {
         int resetIndex = index;
-        skipWhiteSpace();
-        if (!substringIsNext("JOIN ")) {
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, false, false, "JOIN ")) {
             return false;
         }
         skipWhiteSpace();
 
-        current.addChild(new Node(NodeType.TABLE_NAME, current));
-        current = current.getLastChild();
-        if (!tryPlainText()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
             return false;
         }
-        current = current.getParent();
-        skipWhiteSpace();
 
-        if (!previousCharacterWas(' ') || !substringIsNext("AND ")) {
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, true, true, "AND ")) {
             return false;
         }
-        skipWhiteSpace();
 
-        current.addChild(new Node(NodeType.TABLE_NAME, current));
-        current = current.getLastChild();
-        if (!tryPlainText()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
             return false;
         }
-        current = current.getParent();
-        skipWhiteSpace();
 
-        if (!previousCharacterWas(' ') || substringIsNext("ON ")) {
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, true, true, "ON ")) {
             return false;
         }
-        skipWhiteSpace();
 
-        current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
-        current = current.getLastChild();
-        if (!tryAttributeName()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
-        current = current.getParent();
         skipWhiteSpace();
-
-        if (!previousCharacterWas(' ') || substringIsNext("AND ")) {
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.ATTRIBUTE_NAME, this::tryAttributeName, resetIndex, true)) {
             return false;
         }
+
+        if (!checkForStrings(resetIndex, true, true, "AND ")) {
+            return false;
+        }
+
         skipWhiteSpace();
-
-        current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
-        current = current.getLastChild();
-        if (!tryAttributeName()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
-        current = current.getParent();
-        return true;
+        return checkForGrammar(NodeType.ATTRIBUTE_NAME, this::tryAttributeName, resetIndex, true);
     }
 
     // [PlainText] ::= [Letter] | [Digit] | [PlainText] [Letter] | [PlainText] [Digit]
@@ -855,6 +805,30 @@ public class Parser {
         } else {
             return false;
         }
+    }
+
+    private boolean checkForStrings(int resetIndex, boolean clearChildren, boolean leadingWhitespace, String... args) {
+        skipWhiteSpace();
+        if (leadingWhitespace && !previousCharacterWas(' ')) {
+            index = resetIndex;
+            if (clearChildren) {
+                current.clearChildren();
+            }
+            return false;
+        }
+        for (String arg : args) {
+            skipWhiteSpace();
+            if (command.startsWith(arg, index)) {
+                index += arg.length();
+            } else {
+                index = resetIndex;
+                if (clearChildren) {
+                    current.clearChildren();
+                }
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean previousCharacterWas(char c) {
