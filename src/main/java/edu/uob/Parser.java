@@ -486,80 +486,108 @@ public class Parser {
         }
         // Check for condition
         skipWhiteSpace();
-        if (checkForGrammar(NodeType.CONDITION, this::tryConditionR, resetIndex, false)) {
+        if (checkForGrammar(NodeType.CONDITION, this::tryCondition, resetIndex, false)) {
             return true;
         } else {
             return true;
         }
     }
 
-
-    /*
-    ARGH - THIS WON'T WORK FOR BRACKETS!!!!! -- FIX LATER
-     */
     // <Condition> ::= "(" <Condition> [BoolOperator] <Condition> ")" | <Condition> [BoolOperator] <Condition> | "(" [AttributeName] [Comparator] [Value] ")" | [AttributeName] [Comparator] [Value]
-    // The second option for <condition> is susceptible to a left-handed recursion infinite loop.
-    // Therefore, I have two tryCondition methods: tryConditionR() (which allows all four types of <condition>;
-    // and tryConditionNR() (which allows only the later two types of <condition>, and thus avoids the risk of infinite
-    // loops)
-    private boolean tryConditionR() {
+    /*
+    <condition> is the most difficult bit of the grammar for two reasons: one - the optional brackets; and
+    2 - the potential for infinite recursion.  Each of these reasons make the obvious solution for the other
+    impractical
+
+    I think that what I'm going to do is to look for "[AttributeName] [Comparator] [Value]" groupings linked by
+    boolean operators, iteratively.  When I hit an open parenthesis I'll make a new sub node, and when I hit a
+    close parenthesis I'll move up to the parent node.
+    When I run out of these groupings, or I'm moved to the parent of the original condition node, I'm done.
+
+     */
+    private boolean tryCondition() {
+        // Check for a first comparison
+        int theStart = index;
         int resetIndex = index;
-        skipWhiteSpace();
-        boolean inBrackets = false;
-        if (!substringIsNext("(")) {
-            inBrackets = true;
-            index++;
-        }
-        skipWhiteSpace();
-        current.addChild(new Node(current));
-        current = current.getLastChild();
-        if (tryConditionNR()) {
-            current.setType(NodeType.CONDITION);
-            current = current.getParent();
-            skipWhiteSpace();
-            current.addChild(new Node(NodeType.BOOLEAN_OPERATOR, current));
-            current = current.getLastChild();
-            if (!tryBoolOperator()) {
-                current = current.getParent();
-                current.clearChildren();
-                index = resetIndex;
-                return false;
-            }
-            current = current.getParent();
-            skipWhiteSpace();
-            current.addChild(new Node(NodeType.CONDITION, current));
-            current = current.getLastChild();
-            if (!tryConditionR()) {
-                current = current.getParent();
-                current.clearChildren();
-                index = resetIndex;
-                return false;
-            }
-            current = current.getParent();
-            return true;
-        } else if (tryConditionNR()) { // !!!This is the same as tryConditionNR()!!!
-            if (inBrackets && !substringIsNext(")")) {
-                current.clearChildren();
-                index = resetIndex;
-                return false;
-            } else {
-                return true;
-            }
-        } else {
-            current = current.getParent();
-            current.clearChildren();
+        if (!skipWhiteSpaceAndCheckParentheses()) {
             index = resetIndex;
             return false;
+        };
+        if (!checkForGrammar(NodeType.CONDITION, this::tryConditionIndividual, resetIndex, true)) {
+            return false;
         }
+
+        // Check for a joining bool operator and another comparison
+        resetIndex = index;
+        if (!skipWhiteSpaceAndCheckParentheses()) {
+            index = resetIndex;
+            return true;
+        }
+        boolean andAnother = true;
+        if (!checkForGrammar(NodeType.BOOLEAN_OPERATOR, this::tryBoolOperator, resetIndex, false)) {
+            andAnother = false;
+        } else if (!skipWhiteSpaceAndCheckParentheses()) {
+            index = resetIndex;
+            return true;
+        }
+        if (andAnother && !checkForGrammar(NodeType.CONDITION, this::tryConditionIndividual, resetIndex, false)) {
+            andAnother = false;
+        } else if (!skipWhiteSpaceAndCheckParentheses()) {
+            current.popChild();
+            index = resetIndex;
+            return true;
+        }
+
+        // While we have found a previous one, keep checking for further ones
+        while (andAnother) {
+            resetIndex = index;
+            if (!skipWhiteSpaceAndCheckParentheses()) {
+                index = resetIndex;
+                return true;
+            }
+            andAnother = true;
+            if (!checkForGrammar(NodeType.BOOLEAN_OPERATOR, this::tryBoolOperator, resetIndex, false)) {
+                andAnother = false;
+            } else if (!skipWhiteSpaceAndCheckParentheses()) {
+                index = resetIndex;
+                return true;
+            }
+            if (andAnother && !checkForGrammar(NodeType.CONDITION, this::tryConditionIndividual, resetIndex, false)) {
+                andAnother = false;
+            } else if (!skipWhiteSpaceAndCheckParentheses()) {
+                current.popChild();
+                index = resetIndex;
+                return true;
+            }
+        }
+
+        index = resetIndex;
+        return true;
+
     }
 
-    private boolean tryConditionNR() {
+    private boolean tryConditionIndividual() {
+        int resetIndex = index;
+        if (!checkForGrammar(NodeType.ATTRIBUTE_NAME, this::tryAttributeName, resetIndex, true)) {
+            return false;
+        }
+        skipWhiteSpace();
+        if (!checkForGrammar(NodeType.COMPARATOR, this::tryComparator, resetIndex, true)) {
+            return false;
+        }
+        skipWhiteSpace();
+        if (!checkForGrammar(NodeType.VALUE, this::tryValue, resetIndex, true)) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean tryComparison() {
         int resetIndex = index;
         skipWhiteSpace();
         boolean inBrackets = false;
-        if (!substringIsNext("(")) {
+        if (substringIsNext("(")) {
             inBrackets = true;
-            index++;
         }
         skipWhiteSpace();
         current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
@@ -693,7 +721,7 @@ public class Parser {
         skipWhiteSpace();
         current.addChild(new Node(NodeType.CONDITION, current));
         current = current.getLastChild();
-        if (!tryConditionR()) {
+        if (!tryCondition()) {
             current = current.getParent();
             current.clearChildren();
             index = resetIndex;
@@ -797,7 +825,7 @@ public class Parser {
         skipWhiteSpace();
         current.addChild(new Node(NodeType.CONDITION, current));
         current = current.getLastChild();
-        if (tryConditionR()) {
+        if (tryCondition()) {
             current = current.getParent();
             return true;
         }
@@ -926,6 +954,27 @@ public class Parser {
         }
     }
 
+    // This method is a helper for the tryCondition() method.  It handels moving up and down the
+    // syntax tree according to parentheses.  It has a boolean return value to tell the caller function
+    // when to bail
+    private boolean skipWhiteSpaceAndCheckParentheses() {
+        char c = command.charAt(index);
+        while (Character.isWhitespace(c) || c == ')' || c == '(') {
+            skipWhiteSpace();
+            if (command.charAt(index) == '(') {
+                current.addChild(new Node(NodeType.CONDITION, current));
+                current = current.getLastChild();
+            } else if (command.charAt(index) == ')') {
+                if (current.getParent().getType() == NodeType.CONDITION) {
+                    current = current.getParent();
+                } else {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     private boolean substringIsNext(String str) {
         if (command.startsWith(str, index)) {
             index += str.length();
@@ -950,5 +999,19 @@ public class Parser {
 
     private boolean isDigit(char c) {
         return (c >= '0' && c <= '9');
+    }
+
+    private int findMatchingParenthesis(int start) {
+        int open = 1;
+        int toCheck = index;
+        do {
+            if (command.charAt(toCheck) == '(') {
+                open++;
+            } else if (command.charAt(toCheck) == ')') {
+                open--;
+            }
+            toCheck++;
+        } while (toCheck < command.length() && open > 0);
+        return (toCheck >= command.length()) ? -1 : toCheck;
     }
 }
