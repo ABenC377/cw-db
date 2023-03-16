@@ -84,8 +84,64 @@ public class ParserTests {
     @Test
     public void testSelectWhere() {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("SELECT * FROM table WHERE (country LIKE 'rance');");
-        System.out.println("testing <select (where)>");
+        assertEquals("<command>\n" +
+                "└── <select>\n" +
+                "    ├── <wild attribute list>(value = *)\n" +
+                "    ├── [table name](value = table)\n" +
+                "    └── <condition>\n" +
+                "        └── <condition>\n" +
+                "            └── <condition>\n" +
+                "                ├── [attribute name]\n" +
+                "                │   └── [plain text](value = country)\n" +
+                "                ├── [comparator](value = LIKE)\n" +
+                "                └── [value]\n" +
+                "                    └── [string literal](value = rance)\n", ast.toString());
+    }
+
+
+    @Test
+    public void testUpdate() {
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("UPDATE fancyTableName  SET fancyTableName.income = NULL WHERE (age > 2 OR (country LIKE 'rance' AND name == 'james'));");
+        assertEquals("<command>\n" +
+                "└── <update>\n" +
+                "    ├── [table name](value = fancyTableName)\n" +
+                "    ├── <name value list>\n" +
+                "    │   └── <name value pair>\n" +
+                "    │       ├── [attribute name]\n" +
+                "    │       │   ├── [table name](value = fancyTableName)\n" +
+                "    │       │   └── [plain text](value = income)\n" +
+                "    │       └── [value](value = NULL)\n" +
+                "    └── <condition>\n" +
+                "        └── <condition>\n" +
+                "            ├── <condition>\n" +
+                "            │   ├── [attribute name]\n" +
+                "            │   │   └── [plain text](value = age)\n" +
+                "            │   ├── [comparator](value = >)\n" +
+                "            │   └── [value]\n" +
+                "            │       └── [integer literal](value = 2)\n" +
+                "            ├── [boolean operator](value = OR)\n" +
+                "            └── <condition>\n" +
+                "                ├── <condition>\n" +
+                "                │   ├── [attribute name]\n" +
+                "                │   │   └── [plain text](value = country)\n" +
+                "                │   ├── [comparator](value = LIKE)\n" +
+                "                │   └── [value]\n" +
+                "                │       └── [string literal](value = rance)\n" +
+                "                ├── [boolean operator](value = AND)\n" +
+                "                └── <condition>\n" +
+                "                    ├── [attribute name]\n" +
+                "                    │   └── [plain text](value = name)\n" +
+                "                    ├── [comparator](value = ==)\n" +
+                "                    └── [value]\n" +
+                "                        └── [string literal](value = james)\n", ast.toString());
+    }
+
+    @Test
+    public void testFormat() {
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("UPDATE fancyTableName  SET fancyTableName.income = NULL WHERE (age > 2 OR (country LIKE 'rance' AND name == 'james'));");
+        System.out.println("testing <update>");
         System.out.println(ast);
         assertTrue(true);
     }
+
 }

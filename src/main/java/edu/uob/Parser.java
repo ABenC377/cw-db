@@ -506,61 +506,34 @@ public class Parser {
 
      */
     private boolean tryCondition() {
-        // Check for a first comparison
-        int theStart = index;
+
+        // Check for the first comparator group (i.e., [AttributeName] [Comparator] [Value])
         int resetIndex = index;
         if (!skipWhiteSpaceAndCheckParentheses()) {
-            index = resetIndex;
             return false;
-        };
-        if (!checkForGrammar(NodeType.CONDITION, this::tryConditionIndividual, resetIndex, true)) {
+        } else if (!checkForGrammar(NodeType.CONDITION, this::tryConditionIndividual, resetIndex, true)) {
             return false;
         }
 
-        // Check for a joining bool operator and another comparison
+        // Now we know there is a valid condition, we check for further optional parts to the condition
         resetIndex = index;
-        if (!skipWhiteSpaceAndCheckParentheses()) {
-            index = resetIndex;
-            return true;
-        }
-        boolean andAnother = true;
-        if (!checkForGrammar(NodeType.BOOLEAN_OPERATOR, this::tryBoolOperator, resetIndex, false)) {
-            andAnother = false;
-        } else if (!skipWhiteSpaceAndCheckParentheses()) {
-            index = resetIndex;
-            return true;
-        }
-        if (andAnother && !checkForGrammar(NodeType.CONDITION, this::tryConditionIndividual, resetIndex, false)) {
-            andAnother = false;
-        } else if (!skipWhiteSpaceAndCheckParentheses()) {
-            current.popChild();
-            index = resetIndex;
-            return true;
-        }
-
-        // While we have found a previous one, keep checking for further ones
-        while (andAnother) {
-            resetIndex = index;
+        boolean tryAgain = true;
+        while (tryAgain) {
             if (!skipWhiteSpaceAndCheckParentheses()) {
-                index = resetIndex;
-                return true;
+                tryAgain = false;
             }
-            andAnother = true;
-            if (!checkForGrammar(NodeType.BOOLEAN_OPERATOR, this::tryBoolOperator, resetIndex, false)) {
-                andAnother = false;
-            } else if (!skipWhiteSpaceAndCheckParentheses()) {
-                index = resetIndex;
-                return true;
+            if (tryAgain && !checkForGrammar(NodeType.BOOLEAN_OPERATOR, this::tryBoolOperator, resetIndex, false)) {
+                tryAgain = false;
             }
-            if (andAnother && !checkForGrammar(NodeType.CONDITION, this::tryConditionIndividual, resetIndex, false)) {
-                andAnother = false;
-            } else if (!skipWhiteSpaceAndCheckParentheses()) {
+            if (tryAgain && !skipWhiteSpaceAndCheckParentheses()) {
+                tryAgain = false;
+            }
+            if (tryAgain && !checkForGrammar(NodeType.CONDITION, this::tryConditionIndividual, resetIndex, false)) {
                 current.popChild();
-                index = resetIndex;
-                return true;
+                tryAgain = false;
             }
+            resetIndex = index;
         }
-
         index = resetIndex;
         return true;
 
@@ -576,50 +549,7 @@ public class Parser {
             return false;
         }
         skipWhiteSpace();
-        if (!checkForGrammar(NodeType.VALUE, this::tryValue, resetIndex, true)) {
-            return false;
-        }
-        return true;
-    }
-
-    private boolean tryComparison() {
-        int resetIndex = index;
-        skipWhiteSpace();
-        boolean inBrackets = false;
-        if (substringIsNext("(")) {
-            inBrackets = true;
-        }
-        skipWhiteSpace();
-        current.addChild(new Node(NodeType.ATTRIBUTE_NAME, current));
-        current = current.getLastChild();
-        if (!tryAttributeName()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
-        current = current.getParent();
-        skipWhiteSpace();
-        current.addChild(new Node(NodeType.COMPARATOR, current));
-        current = current.getLastChild();
-        if (!tryComparator()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
-        current = current.getParent();
-        skipWhiteSpace();
-        current.addChild(new Node(NodeType.VALUE, current));
-        current = current.getLastChild();
-        if (!tryValue()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
-        current = current.getParent();
-        return true;
+        return (checkForGrammar(NodeType.VALUE, this::tryValue, resetIndex, true));
     }
 
     // <WildAttribList> ::= <AttributeList> | "*"
@@ -687,15 +617,9 @@ public class Parser {
             return false;
         }
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.TABLE_NAME, current));
-        current = current.getLastChild();
-        if (!tryPlainText()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
             return false;
         }
-        current = current.getParent();
         skipWhiteSpace();
         if (!previousCharacterWas(' ') || !substringIsNext("SET ")) {
             current.clearChildren();
@@ -703,15 +627,9 @@ public class Parser {
             return false;
         }
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.NAME_VALUE_LIST, current));
-        current = current.getLastChild();
-        if (!tryNameValueList()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.NAME_VALUE_LIST, this::tryNameValueList, resetIndex, true)) {
             return false;
         }
-        current = current.getParent();
         skipWhiteSpace();
         if (!previousCharacterWas(' ') || !substringIsNext("WHERE ")) {
             current.clearChildren();
@@ -719,16 +637,7 @@ public class Parser {
             return false;
         }
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.CONDITION, current));
-        current = current.getLastChild();
-        if (!tryCondition()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
-        current = current.getParent();
-        return true;
+        return checkForGrammar(NodeType.CONDITION, this::tryCondition, resetIndex, true);
     }
 
     // <NameValueList> ::= <NameValuePair> | <NameValuePair> "," <NameValueList>
@@ -929,6 +838,7 @@ public class Parser {
 
 
     /*____________________HELPER FUNCTIONS BELOW________________________*/
+
     private boolean checkForGrammar(NodeType type, Supplier<Boolean> tryFunc, int resetIndex, boolean completeReset) {
         current.addChild(new Node(type, current));
         current = current.getLastChild();
@@ -960,16 +870,21 @@ public class Parser {
     private boolean skipWhiteSpaceAndCheckParentheses() {
         char c = command.charAt(index);
         while (Character.isWhitespace(c) || c == ')' || c == '(') {
-            skipWhiteSpace();
             if (command.charAt(index) == '(') {
                 current.addChild(new Node(NodeType.CONDITION, current));
                 current = current.getLastChild();
+                index++;
             } else if (command.charAt(index) == ')') {
+                index++;
                 if (current.getParent().getType() == NodeType.CONDITION) {
                     current = current.getParent();
                 } else {
                     return false;
                 }
+            } else if (Character.isWhitespace(command.charAt(index))) {
+                index++;
+            } else {
+                return true;
             }
         }
         return true;
