@@ -73,10 +73,8 @@ public class Parser {
         // save the index, so we can reset it before returning false
         int resetIndex = index;
 
-        // check for the keyword
-        skipWhiteSpace();
-        if (!substringIsNext("USE ")) {
-            index = resetIndex;
+        // Check for the keyword
+        if (!checkForStrings(resetIndex, false, false, "USE ")) {
             return false;
         }
 
@@ -95,15 +93,10 @@ public class Parser {
     private boolean tryCreateDatabase() {
         // Check for the key word sequence
         int resetIndex = index;
-        skipWhiteSpace();
-        if (!substringIsNext("CREATE ")) {
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, false, false, "CREATE ", "DATABASE ")) {
             return false;
         }
-        if (!substringIsNext("DATABASE ")) {
-            index = resetIndex;
-            return false;
-        }
+
         current.setType(NodeType.CREATE_TABLE);
         skipWhiteSpace();
 
@@ -161,13 +154,7 @@ public class Parser {
     private boolean tryCreateTable() {
         // Check for the key word sequence
         int resetIndex = index;
-        skipWhiteSpace();
-        if (!substringIsNext("CREATE ")) {
-            index = resetIndex;
-            return false;
-        }
-        if (!substringIsNext("TABLE ")) {
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, false, false, "CREATE ", "TABLE ")) {
             return false;
         }
         current.setType(NodeType.CREATE_TABLE);
@@ -200,9 +187,7 @@ public class Parser {
     private boolean tryDrop() {
         // Check for the initial DROP keyword
         int resetIndex = index;
-        skipWhiteSpace();
-        if (!substringIsNext("DROP ")) {
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, false, false, "DROP ")) {
             return false;
         }
 
@@ -224,16 +209,10 @@ public class Parser {
     private boolean tryAlter() {
         // Check for the keywords
         int resetIndex = index;
-        skipWhiteSpace();
-        if (!substringIsNext("ALTER ")) {
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, false, false, "ALTER ", "TABLE ")) {
             return false;
         }
-        skipWhiteSpace();
-        if (!substringIsNext("TABLE ")) {
-            index = resetIndex;
-            return false;
-        }
+
         // Check for a table name
         skipWhiteSpace();
         if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
@@ -272,14 +251,7 @@ public class Parser {
     private boolean tryInsert() {
         // Check for keywords
         int resetIndex = index;
-        skipWhiteSpace();
-        if (!substringIsNext("INSERT ")) {
-            index = resetIndex;
-            return false;
-        }
-        skipWhiteSpace();
-        if (!substringIsNext("INTO ")) {
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, false, false, "INSERT ", "INTO ")) {
             return false;
         }
 
@@ -289,11 +261,8 @@ public class Parser {
             return false;
         }
 
-        // Need to do a janky check for space because of the possibility of multiple whitespaces before the keyword
-        skipWhiteSpace();
-        if (!previousCharacterWas(' ') || !substringIsNext("VALUES(")) {
-            current.clearChildren();
-            index = resetIndex;
+        // Check for keywords
+        if (!checkForStrings(resetIndex, true, true, "VALUES", "(")) {
             return false;
         }
 
@@ -304,13 +273,7 @@ public class Parser {
         }
 
         // Finally, check for the closing parenthesis
-        skipWhiteSpace();
-        if (!substringIsNext(")")) {
-            current.clearChildren();
-            index = resetIndex;
-            return false;
-        }
-        return true;
+        return checkForStrings(resetIndex, true, false, ")");
     }
 
     // <ValueList> ::= [Value] | [Value] "," <ValueList>
@@ -374,7 +337,10 @@ public class Parser {
         StringBuilder value = new StringBuilder();
         // handle +/- signs
         if (substringIsNext("+")) {
-        } else if (substringIsNext("-")) { value.append("-"); }
+        } else if (substringIsNext("-")) {
+            value.append("-");
+        }
+
         // Handle the >1 digits
         if (!isDigit(command.charAt(index))) {
             index = resetIndex;
@@ -384,12 +350,14 @@ public class Parser {
             value.append(command.charAt(index));
             index++;
         }
+
         // Handle the decimal point
         if (!substringIsNext(".")) {
             index = resetIndex;
             return false;
         }
         value.append('.');
+
         // Handle the <1 digits
         if (!isDigit(command.charAt(index))) {
             index = resetIndex;
@@ -399,6 +367,7 @@ public class Parser {
             value.append(command.charAt(index));
             index++;
         }
+
         // Set the value
         current.setValue(value.toString());
         return true;
@@ -410,7 +379,9 @@ public class Parser {
         StringBuilder value = new StringBuilder();
         // handle +/- signs
         if (substringIsNext("+")) {
-        } else if (substringIsNext("-")) { value.append("-"); }
+        } else if (substringIsNext("-")) {
+            value.append("-");
+        }
         // Handle the digits
         if (!isDigit(command.charAt(index))) {
             index = resetIndex;
@@ -457,33 +428,32 @@ public class Parser {
     private boolean trySelect() {
         // Look for keyword
         int resetIndex = index;
-        skipWhiteSpace();
-        if (!substringIsNext("SELECT ")) {
+        if (!checkForStrings(resetIndex, false, false, "SELECT ")) {
             return false;
         }
+
         // Check for a wild attribute list
         skipWhiteSpace();
         if (!checkForGrammar(NodeType.WILD_ATTRIBUTE_LIST, this::tryWildAttributeList, resetIndex, true)) {
             return false;
         }
-        // Check for the next keyword
-        skipWhiteSpace();
-        if (!previousCharacterWas(' ') || !substringIsNext("FROM ")) {
-            current.clearChildren();
-            index = resetIndex;
+
+        if (!checkForStrings(resetIndex, true, true, "FROM ")) {
             return false;
         }
+
         // Check for table name
+        skipWhiteSpace();
         if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
             return false;
         }
+
         // Check for an optional WHERE statement
         resetIndex = index;
-        skipWhiteSpace();
-        if (!previousCharacterWas(' ') || !substringIsNext("WHERE ")) {
-            index = resetIndex;
+        if (!checkForStrings(resetIndex, false, true, "WHERE")) {
             return true;
         }
+
         // Check for condition
         skipWhiteSpace();
         if (checkForGrammar(NodeType.CONDITION, this::tryCondition, resetIndex, false)) {
