@@ -50,13 +50,22 @@ public class DBServer {
         }
 
         // Fire up a temporary instance of the database on the saved .tab files
-        Database db = new Database();
+        Interpreter interpreter = new Interpreter();
 
         // Handle the query commands from the input String onto the temporary instance of the DB
         ArrayList<String> commands = new ArrayList<>(Arrays.asList(command.split(";")));
-        ArrayList<AbstractSyntaxTree> ASTs = new ArrayList<>();
         for (String currentCommand : commands) {
-            ASTs.add(new AbstractSyntaxTree(currentCommand));
+            AbstractSyntaxTree ast = null;
+            try {
+                ast = new AbstractSyntaxTree(currentCommand);
+            } catch (IOException err) {
+                System.out.println(err.getMessage());
+            }
+            try {
+                interpreter.interpret(ast);
+            } catch (IOException err) {
+                System.out.println(err.getMessage());
+            }
         }
         /*
         ________ COMMENTED OUT TO ALLOW BUILD AND TESTING OF OTHER FEATURES __________

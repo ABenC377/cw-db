@@ -1,10 +1,5 @@
 package edu.uob;
 
-/*
-GO THROUGH AND MAKE SURE THAT IT ALLOWS FOR MULTIPLE SPACES BETWEEN WORDS.  UFF
- */
-
-
 import java.util.function.Supplier;
 
 public class Parser {
@@ -66,6 +61,17 @@ public class Parser {
             current.clearChildren();
             return false;
         }
+    }
+
+    public boolean validateTree() {
+        while (current.getParent() != null) {
+            current = current.getParent();
+        }
+
+        // CHECK THAT THERE IS NOTHING WHACK WITH THE TREE
+        // IN PARTICULAR, MAKE SURE THAT CONDITIONS ARE CORRECTLY FORMED
+
+        return true;
     }
 
     // <Use> ::= "USE " [DatabaseName]

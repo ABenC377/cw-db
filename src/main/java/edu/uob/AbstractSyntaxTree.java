@@ -1,23 +1,26 @@
 package edu.uob;
 
+import java.io.IOException;
 import java.util.Iterator;
 
 public class AbstractSyntaxTree {
     private final Node root;
     private final String command;
 
-    public AbstractSyntaxTree(String command) {
+    public AbstractSyntaxTree(String command) throws IOException {
         this.command = command;
         this.root = new Node(NodeType.COMMAND, null);
-        this.parseCommand();
+        try {
+            this.parseCommand();
+        } catch (IOException err) {
+            throw new IOException(err.getMessage());
+        }
     }
 
-    private void parseCommand() {
+    private void parseCommand() throws IOException {
         Parser parser = new Parser(root, command);
-        if (parser.populateTree()) {
-            // Give OKAY response
-        } else {
-            // Give ERROR response
+        if (!parser.populateTree() || !parser.validateTree()) {
+            throw new IOException("[ERROR] - Invalid query syntax");
         }
     }
 
@@ -43,5 +46,9 @@ public class AbstractSyntaxTree {
                 print(buffer, childrenPrefix + "└── ", childrenPrefix + "    ", next);
             }
         }
+    }
+
+    public Node getRoot() {
+        return root;
     }
 }

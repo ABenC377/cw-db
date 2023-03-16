@@ -8,6 +8,8 @@ by another part of the program)
 - first column is always called 'id'
 - response sould always begine with '[OK]' or '[ERROR]'
 - Exceptions should not be re†urned to the user (but a human-readable error message may)
+-  In addition to this, all SQL keywords are reserved words, therefore you should not allow them to be used as database/table/attribute names
+
 
 List of things to test for:
 - incorrectly formatted tab file throws an IOException

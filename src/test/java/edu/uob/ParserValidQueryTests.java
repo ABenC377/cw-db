@@ -3,11 +3,13 @@ package edu.uob;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-public class ParserTests {
+public class ParserValidQueryTests {
 
 
     @BeforeEach
@@ -16,35 +18,35 @@ public class ParserTests {
     }
 
     @Test
-    public void testUse() {
+    public void testUse() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("USE test;");
         assertEquals("<command>\n" +
                 "└── <use>\n" +
                 "    └── [database name](value = test)\n", ast.toString());
     }
     @Test
-    public void testCreateDatabase() {
+    public void testCreateDatabase() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("CREATE DATABASE test;");
         assertEquals("<command>\n" +
                 "└── <create>\n" +
                 "    └── [database name](value = test)\n", ast.toString());
     }
     @Test
-    public void testCreateTable() {
+    public void testCreateTable() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("CREATE TABLE test;");
         assertEquals("<command>\n" +
                 "└── <create>\n" +
                 "    └── [table name](value = test)\n", ast.toString());
     }
     @Test
-    public void testDrop() {
+    public void testDrop() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("DROP DATABASE name;");
         assertEquals("<command>\n" +
                 "└── <drop>\n" +
                 "    └── [database name](value = name)\n", ast.toString());
     }
     @Test
-    public void testAlter() {
+    public void testAlter() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("ALTER TABLE tableName ADD tableName.attributeName;");
         assertEquals("<command>\n" +
                 "└── <alter>\n" +
@@ -56,7 +58,7 @@ public class ParserTests {
     }
 
     @Test
-    public void testInsert() {
+    public void testInsert() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("INSERT INTO table VALUES('string literal',TRUE,3);");
         assertEquals("<command>\n" +
                 "└── <insert>\n" +
@@ -70,7 +72,7 @@ public class ParserTests {
                 "            └── [integer literal](value = 3)\n", ast.toString());
     }
     @Test
-    public void testSelectSimple() {
+    public void testSelectSimple() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("SELECT name, country FROM table;");
         assertEquals("<command>\n" +
                 "└── <select>\n" +
@@ -82,7 +84,7 @@ public class ParserTests {
                 "    └── [table name](value = table)\n", ast.toString());
     }
     @Test
-    public void testSelectWhere() {
+    public void testSelectWhere() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("SELECT * FROM table WHERE (country LIKE 'rance');");
         assertEquals("<command>\n" +
                 "└── <select>\n" +
@@ -100,7 +102,7 @@ public class ParserTests {
 
 
     @Test
-    public void testUpdate() {
+    public void testUpdate() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("UPDATE fancyTableName  SET fancyTableName.income = NULL WHERE (age > 2 OR (country LIKE 'rance' AND name == 'james'));");
         assertEquals("<command>\n" +
                 "└── <update>\n" +
@@ -137,11 +139,42 @@ public class ParserTests {
     }
 
     @Test
-    public void testFormat() {
+    public void testDelete() throws IOException {
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("DELETE  FROM efsfsenfsenoi WHERE name LIKE ' erg %$ PL12';");
+        assertEquals("<command>\n" +
+                "└── <delete>\n" +
+                "    ├── [table name](value = efsfsenfsenoi)\n" +
+                "    └── <condition>\n" +
+                "        └── <condition>\n" +
+                "            ├── [attribute name]\n" +
+                "            │   └── [plain text](value = name)\n" +
+                "            ├── [comparator](value = LIKE)\n" +
+                "            └── [value]\n" +
+                "                └── [string literal](value =  erg %$ PL12)\n", ast.toString());
+    }
+
+    @Test
+    public void testJoin() throws IOException {
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("JOIN tableOne AND tableTwo ON id AND id;");
+        assertEquals("<command>\n" +
+                "└── <join>\n" +
+                "    ├── [table name](value = tableOne)\n" +
+                "    ├── [table name](value = tableTwo)\n" +
+                "    ├── [attribute name]\n" +
+                "    │   └── [plain text](value = id)\n" +
+                "    └── [attribute name]\n" +
+                "        └── [plain text](value = id)\n", ast.toString());
+    }
+
+    /*
+    @Test
+    public void testFormat() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("UPDATE fancyTableName  SET fancyTableName.income = NULL WHERE (age > 2 OR (country LIKE 'rance' AND name == 'james'));");
         System.out.println("testing <update>");
         System.out.println(ast);
         assertTrue(true);
     }
+
+     */
 
 }
