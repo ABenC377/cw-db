@@ -689,15 +689,9 @@ public class Parser {
             return false;
         }
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.TABLE_NAME, current));
-        current = current.getLastChild();
-        if (!tryPlainText()) {
-            current = current.getParent();
-            current.clearChildren();
-            index = resetIndex;
+        if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
             return false;
         }
-        current = current.getParent();
         skipWhiteSpace();
         if (!previousCharacterWas(' ') || !substringIsNext("WHERE ")) {
             current.clearChildren();
@@ -705,16 +699,7 @@ public class Parser {
             return false;
         }
         skipWhiteSpace();
-        current.addChild(new Node(NodeType.CONDITION, current));
-        current = current.getLastChild();
-        if (tryCondition()) {
-            current = current.getParent();
-            return true;
-        }
-        current = current.getParent();
-        current.clearChildren();
-        index = resetIndex;
-        return false;
+        return checkForGrammar(NodeType.CONDITION, this::tryCondition, resetIndex, true);
     }
 
     // <Join> ::= "JOIN " [TableName] " AND " [TableName] " ON " [AttributeName] " AND " [AttributeName]
