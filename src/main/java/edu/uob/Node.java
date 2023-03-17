@@ -9,8 +9,6 @@ public class Node {
     private String value;
     private boolean complete;
 
-
-
     public Node() {
         this.type = null;
         this.parent = null;
@@ -32,7 +30,7 @@ public class Node {
         this.value = null;
         this.complete = false;
     }
-
+    
     public void clearChildren() {
         children.clear();
     }

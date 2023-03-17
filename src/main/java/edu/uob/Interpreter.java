@@ -2,7 +2,10 @@ package edu.uob;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.stream.Stream;
 
 import static java.io.File.separator;
 
@@ -31,25 +34,60 @@ public class Interpreter {
     }
     
     private void handleUse(Node node) throws IOException {
-        // Check that the Use node has the correct children
-        // If it does, then make the database we are using the one specified
+        // Check that the Use node has the correct children and that the name
+        // is not invalid.
+        // If that is okay, then make the database we are using the one
+        // specified
         if (node.getNumberChildren() > 1 ||
             node.getLastChild().getType() != NodeType.DATABASE_NAME) {
             throw new IOException("[ERROR] - <use> should have one (and only one) argument, which is a database name");
-        } else if (databaseNameInvalid(node.getLastChild().getValue())) {
+        } else if (nameIsInvalid(node.getLastChild().getValue())) {
             throw new IOException("[ERROR] - databse name of " +
                 node.getLastChild().getValue() + " is invalid");
         } else {
             String dbName = Paths.get("databases" + separator +
                 node.getLastChild().getValue()).toAbsolutePath().toString();
-            database.load(Paths.get(dbName));
+            database.loadDatabase(Paths.get(dbName));
         }
     }
 
     private void handleCreate(Node node) throws IOException {
-    
+        // Invalid queries
+        if (node.getLastChild().getType() != NodeType.DATABASE_NAME &&
+                node.getLastChild().getType() != NodeType.TABLE_NAME) {
+            throw new IOException("[ERROR] = <create> should have one (and " +
+                "only one) argument, which is either a table or database name");
+        } else if (nameIsInvalid(node.getLastChild().getValue())) {
+            throw new IOException("[ERROR] - name of " +
+                node.getLastChild().getValue() + " is invalid");
+        }
+        // Create the databse/table (depending on child node type)
+        if (node.getLastChild().getType() == NodeType.DATABASE_NAME) {
+            String dbName = Paths.get("databases" + separator +
+                node.getLastChild().getValue()).toAbsolutePath().toString();
+            database.createDatabase(Paths.get(dbName));
+        } else {
+            // Catch error of creating a table outside of a database
+            if (database.getDatabaseName() == "") {
+                throw new IOException("[ERROR] - must be using a database to " +
+                    "create a table");
+            }
+            if (node.getNumberChildren() == 1) {
+                try {
+                    database.addTable(node.getLastChild().getValue());
+                } catch (IOException err) {
+                    throw err;
+                }
+            } else {
+                try {
+                    Node[] children = (Node[]) node.getChildren().toArray();
+                    String[] values =
+                        (String[]) Stream.of(children).map(Node::getValue).toArray();
+                    database.addTable(values);
+                }
+            }
+        }
     }
-
 
 
 
@@ -57,7 +95,7 @@ public class Interpreter {
     ____________ HELPER METHODS! ___________
      */
     
-    private boolean databaseNameInvalid(String name) {
+    private boolean nameIsInvalid(String name) {
         return (name.toUpperCase().contains("USE") ||
             name.toUpperCase().contains("CREATE") ||
             name.toUpperCase().contains("DROP") ||

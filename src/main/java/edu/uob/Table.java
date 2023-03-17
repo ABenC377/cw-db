@@ -11,13 +11,21 @@ public class Table {
     private int primaryKeyValue = 1;
     private int primaryKeyIndex;
 
-    public Table(String name) {
+    // For creating a table with just a table name
+    public Table(String name) throws IOException {
         this.name = name;
         this.columns = new ArrayList<>();
         columns.add("id");
+        this.rows = new ArrayList<>();
     }
-
-    public Table(File inputFile) {
+    
+    // For creating a table with a table name and a list of attributes
+    public Table(String[] values) throws IOException {
+    
+    }
+    
+    // For populating a database with tables when loading a database from files
+    public Table(File inputFile) throws IOException {
         String rawFileName = inputFile.getName();
         if (rawFileName.contains(".tab")) {
             // trim the .tab suffix from the file name (for aesthetics)
