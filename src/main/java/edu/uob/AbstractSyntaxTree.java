@@ -34,11 +34,28 @@ public class AbstractSyntaxTree {
         return buffer.toString();
     }
 
-    private void print(StringBuilder buffer, String prefix, String childrenPrefix, Node rt) {
+    // This function is miserable.  I know.  However, it works, and does so
+    // quite efficiently.
+    // Basically, this function recursively prints the children of a tree
+    // in a vertical way to portray the structure of the tree
+    private void print(StringBuilder buffer, String prefix,
+                       String childrenPrefix, Node currentNode) {
+        // Add the value of this node to the buffer
         buffer.append(prefix);
-        buffer.append((rt.getType() != null) ? (rt.getType().toString() + ((rt.getValue() != null) ? ("(value = " + rt.getValue() + ")") : "") ) : "NULL");
+        if (currentNode.getType() == null) {
+            buffer.append("NULL");
+        } else {
+            buffer.append(currentNode.getType().toString() +
+                        ((currentNode.getValue() != null) ?
+                            ("(value = " + currentNode.getValue() + ")") : ""));
+        }
         buffer.append('\n');
-        for (Iterator<Node> childIterator = rt.getChildren().iterator(); childIterator.hasNext();) {
+        
+        // Iterate through the children and add them to the buffer as well
+        // Change the prefix for the children nodes depending on whether or
+        // not they are the final child
+        for (Iterator<Node> childIterator =
+             currentNode.getChildren().iterator(); childIterator.hasNext();) {
             Node next = childIterator.next();
             if (childIterator.hasNext()) {
                 print(buffer, childrenPrefix + "├── ", childrenPrefix + "│   ", next);

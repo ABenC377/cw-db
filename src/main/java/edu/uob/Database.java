@@ -8,11 +8,11 @@ import java.util.ArrayList;
 
 public class Database {
     private final ArrayList<Table> tables;
-
+    
     public Database() {
         tables = new ArrayList<>();
     }
-
+    
     public void load(Path path) throws IOException {
         if (Files.exists(path)) {
             for (File table : path.toFile().listFiles()) {
