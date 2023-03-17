@@ -179,14 +179,12 @@ public class Parser {
             return true;
         }
         
-        System.out.println("Found the opening parenthesis");
         
         skipWhiteSpace();
         if (!checkForGrammar(NodeType.ATTRIBUTE_LIST, this::tryAttributeList, resetIndex, false)) {
             return true;
         }
         
-        System.out.println("Found the attribute list");
         
         skipWhiteSpace();
         if (!substringIsNext(")")) {

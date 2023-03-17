@@ -41,10 +41,20 @@ public class ParserValidQueryTests {
     @Test
     public void testCreateTableWithAttributes() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("CREATE TABLE test " +
-            "(name, age, job, height);");
-        System.out.println("testing <create> with attributes");
-        System.out.println(ast);
-        assertTrue(true);
+            "(name, age, job, test.height);");
+        assertEquals("<command>\n" +
+            "└── <create>\n" +
+            "    ├── [table name](value = test)\n" +
+            "    └── <attribute list>\n" +
+            "        ├── [attribute name]\n" +
+            "        │   └── [plain text](value = name)\n" +
+            "        ├── [attribute name]\n" +
+            "        │   └── [plain text](value = age)\n" +
+            "        ├── [attribute name]\n" +
+            "        │   └── [plain text](value = job)\n" +
+            "        └── [attribute name]\n" +
+            "            ├── [table name](value = test)\n" +
+            "            └── [plain text](value = height)\n", ast.toString());
     }
     @Test
     public void testDrop() throws IOException {
