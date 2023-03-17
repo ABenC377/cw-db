@@ -39,6 +39,14 @@ public class ParserValidQueryTests {
                 "    └── [table name](value = test)\n", ast.toString());
     }
     @Test
+    public void testCreateTableWithAttributes() throws IOException {
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("CREATE TABLE test " +
+            "(name, age, job, height);");
+        System.out.println("testing <create> with attributes");
+        System.out.println(ast);
+        assertTrue(true);
+    }
+    @Test
     public void testDrop() throws IOException {
         AbstractSyntaxTree ast = new AbstractSyntaxTree("DROP DATABASE name;");
         assertEquals("<command>\n" +

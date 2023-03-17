@@ -19,6 +19,7 @@ public class Interpreter {
             tree.getRoot().getType() != NodeType.COMMAND) {
             throw new IOException("[ERROR] - invalid query");
         }
+        /*
         switch (tree.getRoot().getLastChild().getType()) {
             case USE -> handleUse(tree.getRoot().getLastChild());
             case CREATE -> handleCreate(tree.getRoot().getLastChild());
@@ -31,6 +32,7 @@ public class Interpreter {
             case JOIN -> handleJoin(tree.getRoot().getLastChild());
             default -> throw new IOException("[ERROR] - invalid query");
         }
+        */
     }
     
     private void handleUse(Node node) throws IOException {
@@ -80,10 +82,15 @@ public class Interpreter {
                 }
             } else {
                 try {
+                    // Make an array of the values of the children to this
+                    // create node, and pass them to the addTable method of
+                    // the database
                     Node[] children = (Node[]) node.getChildren().toArray();
                     String[] values =
                         (String[]) Stream.of(children).map(Node::getValue).toArray();
                     database.addTable(values);
+                } catch (IOException err) {
+                    throw err;
                 }
             }
         }

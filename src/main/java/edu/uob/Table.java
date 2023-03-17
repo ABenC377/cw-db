@@ -21,7 +21,13 @@ public class Table {
     
     // For creating a table with a table name and a list of attributes
     public Table(String[] values) throws IOException {
-    
+        this.name = values[0];
+        this.columns = new ArrayList<>();
+        columns.add("id");
+        for (int i = 1; i < values.length; i++) {
+            // Check for compound names!!!
+            columns.add(values[i]);
+        }
     }
     
     // For populating a database with tables when loading a database from files

@@ -149,10 +149,10 @@ public class Parser {
         // Otherwise, we just return the current 1-child AttributeName node (hence the false passed into the
         // completeReset parameter in checkForGrammar() below)
         resetIndex = index;
-        if (substringIsNext(".") && checkForGrammar(NodeType.PLAIN_TEXT, this::tryPlainText, resetIndex, false)) {
+        if (substringIsNext(".") &&
+            checkForGrammar(NodeType.PLAIN_TEXT, this::tryPlainText, resetIndex, false)) {
             current.getChild(0).setType(NodeType.TABLE_NAME);
         }
-
         return true;
     }
 
@@ -174,13 +174,20 @@ public class Parser {
         // Check for a possible attribute list.  This requires: 1) checking for opening parenthesis;
         // 2) checking for an attribute list; and 3) checking for a closing parenthesis
         resetIndex = index;
+        skipWhiteSpace();
         if (!substringIsNext("(")) {
             return true;
         }
+        
+        System.out.println("Found the opening parenthesis");
+        
         skipWhiteSpace();
         if (!checkForGrammar(NodeType.ATTRIBUTE_LIST, this::tryAttributeList, resetIndex, false)) {
             return true;
         }
+        
+        System.out.println("Found the attribute list");
+        
         skipWhiteSpace();
         if (!substringIsNext(")")) {
             index = resetIndex;
