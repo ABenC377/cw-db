@@ -17,7 +17,7 @@ public class Interpreter {
         database = new Database();
     }
     
-    public void interpret(AbstractSyntaxTree tree) throws IOException {
+    public String interpret(AbstractSyntaxTree tree) throws IOException {
         if (tree.getRoot() == null ||
             tree.getRoot().getType() != NodeType.COMMAND) {
             throw new IOException("[ERROR] - invalid query");
@@ -29,7 +29,9 @@ public class Interpreter {
             case DROP -> handleDrop(tree.getRoot().getLastChild());
             case ALTER -> handleAlter(tree.getRoot().getLastChild());
             case INSERT -> handleInsert(tree.getRoot().getLastChild());
-            case SELECT -> handleSelect(tree.getRoot().getLastChild());
+            case SELECT -> {
+                return handleSelect(tree.getRoot().getLastChild());
+            }
             case UPDATE -> handleUpdate(tree.getRoot().getLastChild());
             case DELETE -> handleDelete(tree.getRoot().getLastChild());
             case JOIN -> handleJoin(tree.getRoot().getLastChild());
@@ -37,6 +39,7 @@ public class Interpreter {
         }
         
         saveState();
+        return "";
     }
     
     private void handleUse(Node node) throws IOException {
@@ -177,6 +180,18 @@ public class Interpreter {
         database.insertRow(insertNode);
     }
 
+    private String handleSelect(Node selectNode) throws IOException {
+        if (selectNode.getNumberChildren() == 2) {
+            return database.selectValues(selectNode.getChild(0),
+                selectNode.getChild(1));
+        } else if (selectNode.getNumberChildren() == 3) {
+            return database.selectValuesWhere(selectNode.getChild(0),
+                selectNode.getChild(1), selectNode.getChild(2));
+        } else {
+            throw new IOException("[ERROR] - invalid number of arguments to a" +
+                " SELECT command");
+        }
+    }
 
     /*
     ____________ HELPER METHODS! ___________
@@ -205,7 +220,7 @@ public class Interpreter {
             name.equalsIgnoreCase("FALSE") ||
             name.equalsIgnoreCase("NULL") ||
             name.equalsIgnoreCase("LIKE") ||
-            name.equalsIgnoreCase("OR")
+            name.equalsIgnoreCase("OR"));
     }
     
     

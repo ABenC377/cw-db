@@ -19,7 +19,8 @@ public class Table {
     }
     
     // For creating a table with a table name and a list of attributes
-    public Table(String tableName, String[] attributes) throws IOException {
+    public Table(String tableName,
+                 String[] attributes) throws IOException {
         this.tableName = tableName;
         this.attributeNames = new ArrayList<>();
         attributeNames.add("id");
@@ -144,13 +145,85 @@ public class Table {
     }
     
     public void insertValues(Node valuesList) throws IOException {
-        if (valuesList.getNumberChildren() != (attributeNames.size() + 1)) {
+        if (valuesList.getNumberChildren() != (attributeNames.size() - 1)) {
             throw new IOException("[ERROR] - INSERT command must provide a " +
                 "value for every attribute in the table");
         }
         
+        // Add the primary key
         ArrayList<String> newRow = new ArrayList<>();
         newRow.add(String.valueOf(primaryKeyValue));
         primaryKeyValue++;
+        
+        // add the values
+        for (int i = 0; i < valuesList.getNumberChildren(); i++) {
+            newRow.add(valuesList.getChild(i).getValue());
+        }
+        
+        // Add the row to the db data structure
+        rows.add(newRow);
+    }
+    
+    public String selectValues(ArrayList<String> selectAttributes) throws IOException {
+        ArrayList<Integer> attributeIndexes = new ArrayList<>();
+        for (String attributeName : selectAttributes) {
+            attributeIndexes.add(findIndexOfAttribute(attributeName));
+        }
+        
+        StringBuilder output = new StringBuilder();
+        for (int index : attributeIndexes) {
+            output.append(attributeNames.get(index));
+            output.append("\t|\t");
+        }
+        output.append(System.lineSeparator());
+        
+        for (ArrayList<String> row : rows) {
+            for (int index : attributeIndexes) {
+                output.append(row.get(index));
+                output.append("\t|\t");
+            }
+            output.append(System.lineSeparator());
+        }
+        
+        return output.toString();
+    }
+    
+    public String selectValuesWhere(ArrayList<String> selectAttributes,
+                                    Node condition) throws IOException {
+        ArrayList<Integer> attributeIndexes = new ArrayList<>();
+        for (String attributeName : selectAttributes) {
+            attributeIndexes.add(findIndexOfAttribute(attributeName));
+        }
+    
+        StringBuilder output = new StringBuilder();
+        for (int index : attributeIndexes) {
+            output.append(attributeNames.get(index));
+            output.append("\t|\t");
+        }
+        output.append(System.lineSeparator());
+    
+        for (ArrayList<String> row : rows) {
+            if (passesCondition(row, condition)) {
+                for (int index : attributeIndexes) {
+                    output.append(row.get(index));
+                    output.append("\t|\t");
+                }
+                output.append(System.lineSeparator());
+            }
+        }
+    
+        return output.toString();
+    }
+    
+    private boolean passesCondition(ArrayList<String> row,
+                                    Node conditionNode) throws IOException {
+        // check
+        if (conditionNode.getNumberChildren() != 3) {
+            throw new IOException("[ERROR] - incorrectly formed condition " +
+                "statement");
+        }
+        
+        
     }
 }
+

@@ -63,7 +63,7 @@ public class DBServer {
                 return err.getMessage();
             }
             try {
-                interpreter.interpret(ast);
+                return interpreter.interpret(ast);
             } catch (IOException err) {
                 return err.getMessage();
             }

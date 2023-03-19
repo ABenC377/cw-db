@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Database {
     private final ArrayList<Table> tables;
@@ -57,7 +58,8 @@ public class Database {
         tables.add(new Table(tableName));
     }
     
-    public void addTable(String name, String[] attributes) throws IOException {
+    public void addTable(String name,
+                         String[] attributes) throws IOException {
         tables.add(new Table(name, attributes));
     }
     
@@ -94,12 +96,14 @@ public class Database {
         return tableExists;
     }
     
-    public void addAttributeToTable(String tableName, Node attributeNode) throws IOException {
+    public void addAttributeToTable(String tableName,
+                                    Node attributeNode) throws IOException {
         Table toAlter = getTable(tableName);
         toAlter.addAttribute(attributeNode);
     }
     
-    public void dropAttributeFromTable(String tableName, Node attributeNode) throws IOException {
+    public void dropAttributeFromTable(String tableName,
+                                       Node attributeNode) throws IOException {
         Table toAlter = getTable(tableName);
         toAlter.dropAttribute(attributeNode);
     }
@@ -115,13 +119,36 @@ public class Database {
     
     private Table getTable(String tableName) throws IOException {
         for (Table table : tables) {
-            if (table.getName() == tableName) {
+            if (Objects.equals(table.getName(), tableName)) {
                 return table;
             }
         }
         throw new IOException("[ERROR] - table of name " + tableName + " does" +
             " not exist in the current database");
     }
+    
+    public String selectValues(Node attributeList,
+                               Node tableName) throws IOException {
+        Table table = getTable(tableName.getValue());
+        ArrayList<String> selectAttributes = new ArrayList<>();
+        for (int i = 0; i < attributeList.getNumberChildren(); i++) {
+            selectAttributes.add(attributeList.getChild(i).getValue());
+        }
+        return table.selectValues(selectAttributes);
+    }
+    
+    public String selectValuesWhere(Node attributeList,
+                                    Node tableName,
+                                    Node condition) throws IOException {
+        Table table = getTable(tableName.getValue());
+        ArrayList<String> selectAttributes = new ArrayList<>();
+        for (int i = 0; i < attributeList.getNumberChildren(); i++) {
+            selectAttributes.add(attributeList.getChild(i).getValue());
+        }
+        return table.selectValuesWhere(selectAttributes, condition);
+    }
+
+    
     
     // Static methods
     public static boolean exists(String databaseName) {
@@ -144,7 +171,5 @@ public class Database {
         if (databaseDirectory.exists() && !databaseDirectory.delete()) {
             throw new IOException("[ERROR] - unable to delete database " + databaseName);
         }
-    
-        /* TODO ---- Delete from metadata! */
     }
 }

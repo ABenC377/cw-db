@@ -1,14 +1,9 @@
 package edu.uob;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import static java.nio.file.StandardOpenOption.APPEND;
 
 public class Metadata {
     File metadataFile;
