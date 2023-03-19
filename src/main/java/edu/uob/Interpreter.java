@@ -183,29 +183,29 @@ public class Interpreter {
      */
     
     private boolean nameIsInvalid(String name) {
-        return (name.toUpperCase().contains("USE") ||
-            name.toUpperCase().contains("CREATE") ||
-            name.toUpperCase().contains("DROP") ||
-            name.toUpperCase().contains("DATABASE") ||
-            name.toUpperCase().contains("TABLE") ||
-            name.toUpperCase().contains("ALTER") ||
-            name.toUpperCase().contains("INSERT") ||
-            name.toUpperCase().contains("INTO") ||
-            name.toUpperCase().contains("VALUES") ||
-            name.toUpperCase().contains("SELECT") ||
-            name.toUpperCase().contains("FROM") ||
-            name.toUpperCase().contains("WHERE") ||
-            name.toUpperCase().contains("UPDATE") ||
-            name.toUpperCase().contains("SET") ||
-            name.toUpperCase().contains("DELETE") ||
-            name.toUpperCase().contains("JOIN") ||
-            name.toUpperCase().contains("AND") ||
-            name.toUpperCase().contains("ON") ||
-            name.toUpperCase().contains("TRUE") ||
-            name.toUpperCase().contains("FALSE") ||
-            name.toUpperCase().contains("NULL") ||
-            name.toUpperCase().contains("LIKE") ||
-            name.toUpperCase().contains("OR"));
+        return (name.equalsIgnoreCase("USE") ||
+            name.equalsIgnoreCase("CREATE") ||
+            name.equalsIgnoreCase("DROP") ||
+            name.equalsIgnoreCase("DATABSE") ||
+            name.equalsIgnoreCase("TABlE") ||
+            name.equalsIgnoreCase("ALTER") ||
+            name.equalsIgnoreCase("INSERT") ||
+            name.equalsIgnoreCase("INTO") ||
+            name.equalsIgnoreCase("VALUES") ||
+            name.equalsIgnoreCase("SELECT") ||
+            name.equalsIgnoreCase("FROM") ||
+            name.equalsIgnoreCase("WHERE") ||
+            name.equalsIgnoreCase("UPDATE") ||
+            name.equalsIgnoreCase("SET") ||
+            name.equalsIgnoreCase("DELETE") ||
+            name.equalsIgnoreCase("JOIN") ||
+            name.equalsIgnoreCase("AND") ||
+            name.equalsIgnoreCase("ON") ||
+            name.equalsIgnoreCase("TRUE") ||
+            name.equalsIgnoreCase("FALSE") ||
+            name.equalsIgnoreCase("NULL") ||
+            name.equalsIgnoreCase("LIKE") ||
+            name.equalsIgnoreCase("OR")
     }
     
     

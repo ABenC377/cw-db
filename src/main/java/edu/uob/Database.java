@@ -10,6 +10,7 @@ import java.util.ArrayList;
 public class Database {
     private final ArrayList<Table> tables;
     private String databaseName;
+    private Metadata metadata;
     
     public Database() {
         tables = new ArrayList<>();
@@ -48,13 +49,7 @@ public class Database {
             }
             
             // Create the metadata file in the directory
-            try {
-                Files.createFile(Paths.get(path.toString() + File.separator +
-                    "meta.csv"));
-            } catch (IOException err) {
-                throw new IOException("[ERROR] - unable to make metadata file" +
-                    " in new database directory");
-            }
+            metadata = new Metadata(path);
         }
     }
     
@@ -137,12 +132,15 @@ public class Database {
     
     public static void delete(String databaseName) throws IOException {
         File databaseDirectory = new File("databases" + File.separator + databaseName);
+        
         if (databaseDirectory.exists() && databaseDirectory.isDirectory()) {
-            for (File table : databaseDirectory.listFiles())
+            for (File table : databaseDirectory.listFiles()) {
                 if (!table.delete()) {
                     throw new IOException("[ERROR] - unable to delete table " + table.toString());
-                };
+                }
+            }
         }
+        
         if (databaseDirectory.exists() && !databaseDirectory.delete()) {
             throw new IOException("[ERROR] - unable to delete database " + databaseName);
         }
