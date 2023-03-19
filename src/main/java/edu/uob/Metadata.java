@@ -4,8 +4,11 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static java.nio.file.StandardOpenOption.APPEND;
 
 public class Metadata {
     File metadataFile;
@@ -20,8 +23,43 @@ public class Metadata {
         }
     }
     
-    public void updatePrimaryKey(String tableName, int newPrimaryKey) {
-    
+    public void updatePrimaryKey(String tableName, int newPrimaryKey) throws IOException {
+        // Read the current csv file
+        FileReader reader = new FileReader(metadataFile);
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        ArrayList<String> lines = new ArrayList<>();
+        boolean repeat = true;
+        while (repeat) {
+            String currentLine = null;
+            try {
+                currentLine = bufferedReader.readLine();
+            } catch (IOException err) {
+                repeat = false;
+            }
+            if (repeat) {
+                ArrayList<String> table =
+                    new ArrayList<>(Arrays.asList(currentLine.split(",")));
+                if (table.get(0).equalsIgnoreCase(tableName)) {
+                    table.remove(1);
+                    table.add(String.valueOf(newPrimaryKey));
+                    String newLine = table.get(0) + "," + table.get(1);
+                    lines.add(newLine);
+                } else {
+                    lines.add(currentLine);
+                }
+            }
+        }
+        bufferedReader.close();
+        
+        // rewrite it with the new values
+        FileWriter writer = new FileWriter(metadataFile);
+        BufferedWriter bufferedWriter = new BufferedWriter(writer);
+        for (String line : lines) {
+            bufferedWriter.write(line);
+            bufferedWriter.newLine();
+        }
+        bufferedWriter.flush();
+        bufferedWriter.close();
     }
     
     public int getPrimaryKey(String tableName) throws IOException {
@@ -49,13 +87,67 @@ public class Metadata {
     }
     
     public void addTable(String tableName) throws IOException {
+        // Read the current csv file
+        FileReader reader = new FileReader(metadataFile);
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        ArrayList<String> lines = new ArrayList<>();
+        boolean repeat = true;
+        while (repeat) {
+            String currentLine = null;
+            try {
+                currentLine = bufferedReader.readLine();
+            } catch (IOException err) {
+                repeat = false;
+            }
+            if (repeat) {
+                lines.add(currentLine);
+            }
+        }
+        lines.add(tableName + ",1");
+        bufferedReader.close();
+    
+        // rewrite it with the new table line
         FileWriter writer = new FileWriter(metadataFile);
-        writer.write("\n" + tableName + ",1");
-        writer.flush();
-        writer.close();
+        BufferedWriter bufferedWriter = new BufferedWriter(writer);
+        for (String line : lines) {
+            bufferedWriter.write(line);
+            bufferedWriter.newLine();
+        }
+        bufferedWriter.flush();
+        bufferedWriter.close();
     }
     
-    public void dropTable(String tableName) {
+    public void dropTable(String tableName) throws IOException {
+        // Read the current csv file
+        FileReader reader = new FileReader(metadataFile);
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        ArrayList<String> lines = new ArrayList<>();
+        boolean repeat = true;
+        while (repeat) {
+            String currentLine = null;
+            try {
+                currentLine = bufferedReader.readLine();
+            } catch (IOException err) {
+                repeat = false;
+            }
+            if (repeat) {
+                ArrayList<String> table =
+                    new ArrayList<>(Arrays.asList(currentLine.split(",")));
+                if (!(table.get(0).equalsIgnoreCase(tableName))) {
+                    lines.add(currentLine);
+                }
+            }
+        }
+        bufferedReader.close();
     
+        // rewrite it with table line removed
+        FileWriter writer = new FileWriter(metadataFile);
+        BufferedWriter bufferedWriter = new BufferedWriter(writer);
+        for (String line : lines) {
+            bufferedWriter.write(line);
+            bufferedWriter.newLine();
+        }
+        bufferedWriter.flush();
+        bufferedWriter.close();
     }
 }
