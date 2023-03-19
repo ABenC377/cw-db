@@ -1,5 +1,6 @@
 package edu.uob;
 
+import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -11,15 +12,17 @@ import static java.io.File.separator;
 
 public class Interpreter {
     Database database;
-    public Interpreter() {}
+    
+    public Interpreter() {
+        database = new Database();
+    }
     
     public void interpret(AbstractSyntaxTree tree) throws IOException {
-        database = new Database();
         if (tree.getRoot() == null ||
             tree.getRoot().getType() != NodeType.COMMAND) {
             throw new IOException("[ERROR] - invalid query");
         }
-        /*
+        
         switch (tree.getRoot().getLastChild().getType()) {
             case USE -> handleUse(tree.getRoot().getLastChild());
             case CREATE -> handleCreate(tree.getRoot().getLastChild());
@@ -32,7 +35,8 @@ public class Interpreter {
             case JOIN -> handleJoin(tree.getRoot().getLastChild());
             default -> throw new IOException("[ERROR] - invalid query");
         }
-        */
+        
+        saveState();
     }
     
     private void handleUse(Node node) throws IOException {
@@ -44,7 +48,7 @@ public class Interpreter {
             node.getLastChild().getType() != NodeType.DATABASE_NAME) {
             throw new IOException("[ERROR] - <use> should have one (and only one) argument, which is a database name");
         } else if (nameIsInvalid(node.getLastChild().getValue())) {
-            throw new IOException("[ERROR] - databse name of " +
+            throw new IOException("[ERROR] - database name of " +
                 node.getLastChild().getValue() + " is invalid");
         } else {
             String dbName = Paths.get("databases" + separator +
@@ -85,10 +89,31 @@ public class Interpreter {
                     // Make an array of the values of the children to this
                     // create node, and pass them to the addTable method of
                     // the database
-                    Node[] children = (Node[]) node.getChildren().toArray();
-                    String[] values =
-                        (String[]) Stream.of(children).map(Node::getValue).toArray();
-                    database.addTable(values);
+                    ArrayList<Node> children = node.getChildren();
+                    String tableName = children.get(0).getValue();
+                    Node[] attributes =
+                        (Node[]) children.get(1).getChildren().toArray();
+                    ArrayList<String> attributeNames = new ArrayList<>();
+                    for (Node attribute : attributes) {
+                        if (attribute.getNumberChildren() == 1) {
+                            attributeNames.add(attribute.getLastChild().getValue());
+                        } else if (attribute.getNumberChildren() == 2) {
+                            if (attribute.getChild(0).getValue() != tableName) {
+                                throw new IOException("[ERROR] - cannot " +
+                                    "create a table with an attribute " +
+                                    "associated with another table");
+                            } else {
+                                attributeNames.add(attribute.getChild(1).getValue());
+                            }
+                        } else {
+                            throw new IOException("[ERROR] - incorrectly " +
+                                "formed [attribute]");
+                        }
+                    }
+                    String[] attributeNamesArray =
+                        new String[attributeNames.size()];
+                    attributeNames.toArray(attributeNamesArray);
+                    database.addTable(tableName, attributeNamesArray);
                 } catch (IOException err) {
                     throw err;
                 }
@@ -96,6 +121,61 @@ public class Interpreter {
         }
     }
 
+    private void handleDrop(Node dropNode) throws IOException {
+        // Catch possible errros in the command
+        if (dropNode == null || dropNode.getType() != NodeType.DROP || dropNode.getNumberChildren() != 1) {
+            throw new IOException("[ERROR] - incorrectly formed DROP command");
+        }
+        
+        Node nameNode = dropNode.getLastChild();
+        if (nameNode.getType() == NodeType.TABLE_NAME) {
+            // Drop the table
+            database.dropTable(nameNode.getValue());
+        } else if (nameNode.getType() == NodeType.DATABASE_NAME) {
+            // Drop the database
+            String databaseName = nameNode.getValue();
+            if (Database.exists(databaseName)) {
+                Database.delete(databaseName);
+            }
+            if (database.getDatabaseName() == databaseName) {
+                database.clearDatabase();
+            }
+        } else {
+            throw new IOException("[ERROR] - DROP command must specify TABLE " +
+                "or DATABASE");
+        }
+    }
+    
+    private void handleAlter(Node alterNode) throws IOException {
+        if (alterNode.getNumberChildren() != 3) {
+            throw new IOException("[ERROR] - ALTER command requires a table " +
+                "name, an alteration type (i.e., ADD or DROP), and an " +
+                "attribute name");
+        }
+        Node tableNode = alterNode.getChild(0);
+        if (!database.tableExists(tableNode.getValue())) {
+            throw new IOException("[ERROR] - table of name " +
+                tableNode.getValue() + " does not exist in the current " +
+                "database");
+        }
+        
+        Node typeNode = alterNode.getChild(1);
+        Node attributeNode = alterNode.getChild(2);
+        if (typeNode.getValue() == "ADD") {
+            database.addAttributeToTable(tableNode.getValue(),
+                attributeNode);
+        } else if (typeNode.getValue() == "DROP") {
+            database.dropAttributeFromTable(tableNode.getValue(),
+                attributeNode);
+        } else {
+            throw new IOException("[ERROR] - the only valid types of " +
+                "alteration command are ADD and DROP");
+        }
+    }
+    
+    private void handleInsert(Node insertNode) throws IOException {
+        database.insertRow(insertNode);
+    }
 
 
     /*

@@ -18,6 +18,7 @@ public class DBServer {
 
     private static final char END_OF_TRANSMISSION = 4;
     private String storageFolderPath;
+    private Interpreter interpreter;
 
     public static void main(String[] args) throws IOException {
         DBServer server = new DBServer();
@@ -33,8 +34,11 @@ public class DBServer {
             // Create the database storage folder if it doesn't already exist !
             Files.createDirectories(Paths.get(storageFolderPath));
         } catch(IOException ioe) {
-            System.out.println("Can't seem to create database storage folder " + storageFolderPath);
+            System.out.println("Can't seem to create database storage folder" +
+                " " + storageFolderPath);
         }
+    
+        interpreter = new Interpreter();
     }
 
     /**
@@ -48,9 +52,6 @@ public class DBServer {
         if (this.commandIsInvalid(command)) {
             return "[ERROR]: command provided is not in a correct syntax - please close command with a ';'";
         }
-
-        // Fire up a temporary instance of the database on the saved .tab files
-        Interpreter interpreter = new Interpreter();
 
         // Handle the query commands from the input String onto the temporary instance of the DB
         ArrayList<String> commands = new ArrayList<>(Arrays.asList(command.split(";")));
@@ -71,11 +72,9 @@ public class DBServer {
         ________ COMMENTED OUT TO ALLOW BUILD AND TESTING OF OTHER FEATURES __________
 
         for (AbstractSyntaxTree currentAST : ASTs) {
-            db.update(currentAST);
+            interpreter.interpret(currentAST);
         }
 
-        // Save the changes made to the temporary DB to the saved .tab files
-        db.saveCurrentState();
 
          */
 

@@ -5,101 +5,152 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Table {
-    private String name;
-    private ArrayList<String> columns;
+    private String tableName;
+    private ArrayList<String> attributeNames;
     private ArrayList<ArrayList<String>> rows;
     private int primaryKeyValue = 1;
-    private int primaryKeyIndex;
 
     // For creating a table with just a table name
     public Table(String name) throws IOException {
-        this.name = name;
-        this.columns = new ArrayList<>();
-        columns.add("id");
+        this.tableName = name;
+        this.attributeNames = new ArrayList<>();
+        attributeNames.add("id");
         this.rows = new ArrayList<>();
     }
     
     // For creating a table with a table name and a list of attributes
-    public Table(String[] values) throws IOException {
-        this.name = values[0];
-        this.columns = new ArrayList<>();
-        columns.add("id");
-        for (int i = 1; i < values.length; i++) {
-            // Check for compound names!!!
-            columns.add(values[i]);
-        }
+    public Table(String tableName, String[] attributes) throws IOException {
+        this.tableName = tableName;
+        this.attributeNames = new ArrayList<>();
+        attributeNames.add("id");
+        attributeNames.addAll(Arrays.asList(attributes));
     }
     
     // For populating a database with tables when loading a database from files
     public Table(File inputFile) throws IOException {
-        String rawFileName = inputFile.getName();
-        if (rawFileName.contains(".tab")) {
-            // trim the .tab suffix from the file name (for aesthetics)
-            this.name = rawFileName.toLowerCase().substring(0, rawFileName.lastIndexOf(".tab"));
-        } else {
-            // throw InvalidFileTypeException();
-        }
-
-        FileReader reader = null;
+        // HANDLE META DATA FILE TO GET PRIMARY KEY VALUE
+        
+        
+        // Open the file
+        FileReader reader;
         try {
             reader = new FileReader(inputFile);
         } catch (FileNotFoundException e) {
-            // throw new RuntimeException(e);
+            throw new IOException("[ERROR] - could not open " + inputFile.getName());
         }
 
-        BufferedReader bReader = null;
-        if (reader != null) {
-            bReader = new BufferedReader(reader);
+        BufferedReader bReader = new BufferedReader(reader);
+        String firstRow = bReader.readLine();
+
+        // Populate the columns ArrayList with the elements of the first row
+        if (firstRow != null) {
+            this.attributeNames = new ArrayList<>(Arrays.asList(firstRow.split("\t")));
+        } else {
+            throw new IOException("[ERROR] - Cannot open table file that is " +
+                "empty");
         }
 
-        String firstRow = null;
-        if (bReader != null) {
+        // Populate the rows while buffer reader still pumping out lines
+        String current = null;
+        rows = new ArrayList<>();
+        boolean repeat = true;
+        while (repeat) {
             try {
-                firstRow = bReader.readLine();
-            } catch (IOException e) {
-                // throw new RuntimeException(e);
+                current = bReader.readLine();
+            } catch (IOException err) {
+                repeat = false;
+            }
+            rows.add(new ArrayList<>(Arrays.asList(current.split("\t"))));
+        }
+        
+        // Get the name of the file
+        this.tableName = inputFile.getName();
+
+        // Close things up like a responsible programmer
+        try {
+            bReader.close();
+        } catch (IOException err) {
+            throw err;
+        }
+    }
+    
+    public void addAttribute(Node attributeNode) throws IOException {
+        if (attributeNode.getType() != NodeType.ATTRIBUTE_NAME) {
+            throw new IOException("[ERROR] - invalid attribute name");
+        }
+        
+        if (attributeNode.getChild(0).getType() == NodeType.TABLE_NAME) {
+            if (attributeNode.getChild(0).getValue() != tableName) {
+                throw new IOException("[ERROR] - attribute's table name must " +
+                    "be the same as the name of the table that it is being " +
+                    "added to");
             }
         }
-
-        if (firstRow != null) {
-            this.columns = new ArrayList<>(Arrays.asList(firstRow.split("\t")));
-        } else {
-            // something
+        
+        if (findIndexOfAttribute(attributeNode.getLastChild().getValue()) != -1) {
+            throw new IOException("[ERROR] - Cannot add attribute to table, " +
+                "as attribute is already present in this table");
         }
-
-        //Checking that there is a column called "id" - as specified in the specification.  I'm being flexible
-        // and allowing this to be in any case
-        boolean hasPrimaryKey = false;
+        
+        attributeNames.add(attributeNode.getLastChild().getValue());
+        for (ArrayList<String> row : rows) {
+            row.add("");
+        }
+    }
+    
+    public void dropAttribute(Node attributeNode) throws IOException {
+        // Check that there is an attribute
+        if (attributeNode.getType() != NodeType.ATTRIBUTE_NAME) {
+            throw new IOException("[ERROR] - invalid attribute name");
+        }
+    
+        // Check it doesn't relate to a different table
+        if (attributeNode.getChild(0).getType() == NodeType.TABLE_NAME) {
+            if (attributeNode.getChild(0).getValue() != tableName) {
+                throw new IOException("[ERROR] - attribute's table name must " +
+                    "be the same as the name of the table that it is being " +
+                    "added to");
+            }
+        }
+        
+        // Check attribute exists in this table
+        String attributeName = attributeNode.getLastChild().getValue();
+        int attributeIndex = findIndexOfAttribute(attributeName);
+        if (attributeIndex == -1) {
+            throw new IOException("[ERROR] - the attribute being dropped is " +
+                "not present in this table");
+        }
+        
+        // Now actually remove the attribute
+        attributeNames.remove(attributeIndex);
+        for (ArrayList<String> row : rows) {
+            row.remove(attributeIndex);
+        }
+    }
+    
+    public String getName() {
+        return tableName;
+    }
+    
+    private int findIndexOfAttribute(String attributeName) {
         int index = 0;
-        for (String col : this.columns) {
-            if (col.toLowerCase() == "id") {
-                primaryKeyIndex = index;
-                hasPrimaryKey = true;
+        for (String currentName : attributeNames) {
+            if (currentName.toLowerCase() == attributeName.toLowerCase()) {
+                return index;
             }
             index++;
         }
-        if (!hasPrimaryKey) {
-            // throw an excpetion or something
+        return -1;
+    }
+    
+    public void insertValues(Node valuesList) throws IOException {
+        if (valuesList.getNumberChildren() != (attributeNames.size() + 1)) {
+            throw new IOException("[ERROR] - INSERT command must provide a " +
+                "value for every attribute in the table");
         }
-
-        String current = null;
-        try {
-            current = bReader.readLine();
-            rows = new ArrayList<>();
-        } catch (IOException e) {
-            // throw new RuntimeException(e);
-        }
-
-        while (current != null) {
-            ArrayList<String> rowList = new ArrayList<>(Arrays.asList(current.split("\t")));
-            this.primaryKeyValue = Math.max(Integer.parseInt(rowList.get(primaryKeyIndex)), this.primaryKeyValue);
-            rows.add(rowList);
-        }
-
-        try {
-            bReader.close();
-        } catch (IOException e) {
-            // throw new RuntimeException(e);
-        }
+        
+        ArrayList<String> newRow = new ArrayList<>();
+        newRow.add(String.valueOf(primaryKeyValue));
+        primaryKeyValue++;
     }
 }
