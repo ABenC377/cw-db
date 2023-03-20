@@ -1,5 +1,6 @@
 package edu.uob;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class Node {
@@ -37,9 +38,6 @@ public class Node {
 
     // Getters
     public Node getParent() {
-        if (parent == null) {
-            System.out.println("ERROR -- tried to getParent() of a Node with a null parent");
-        }
         return parent;
     }
     public Node getLastChild() {

@@ -17,7 +17,6 @@ public class Parser {
         // making a new child node for the potential command type
         current.addChild(new Node(current));
         current = current.getLastChild();
-
         // checking that there is a valid command type
         if (tryUse()) {
             current.setType(NodeType.USE);
@@ -711,14 +710,13 @@ public class Parser {
 
     // [PlainText] ::= [Letter] | [Digit] | [PlainText] [Letter] | [PlainText] [Digit]
     private boolean tryPlainText() {
-        char c = command.charAt(index);
-        if (!isDigit(c) && !isLetter(c)) {
+        if (!(isDigit(command.charAt(index)) || isLetter(command.charAt(index)))) {
             return false;
         } else {
             int startingIndex = index;
-            while (isDigit(c) || isLetter(c)) {
+            while (index < command.length() &&
+                   (isDigit(command.charAt(index)) || isLetter(command.charAt(index)))) {
                 index++;
-                c = command.charAt(index);
             }
             current.setValue(command.substring(startingIndex, index));
             return true;
@@ -748,7 +746,8 @@ public class Parser {
 
 
     private void skipWhiteSpace() {
-        while (Character.isWhitespace(command.charAt(index))) {
+        while (index < command.length() &&
+            Character.isWhitespace(command.charAt(index))) {
             index++;
         }
     }
@@ -758,7 +757,8 @@ public class Parser {
     // when to bail
     private boolean skipWhiteSpaceAndCheckParentheses() {
         char c = command.charAt(index);
-        while (Character.isWhitespace(c) || c == ')' || c == '(') {
+        while (index < command.length() &&
+               (Character.isWhitespace(c) || c == ')' || c == '(')) {
             if (command.charAt(index) == '(') {
                 current.addChild(new Node(NodeType.CONDITION, current));
                 current = current.getLastChild();
@@ -827,19 +827,5 @@ public class Parser {
 
     private boolean isDigit(char c) {
         return (c >= '0' && c <= '9');
-    }
-
-    private int findMatchingParenthesis(int start) {
-        int open = 1;
-        int toCheck = index;
-        do {
-            if (command.charAt(toCheck) == '(') {
-                open++;
-            } else if (command.charAt(toCheck) == ')') {
-                open--;
-            }
-            toCheck++;
-        } while (toCheck < command.length() && open > 0);
-        return (toCheck >= command.length()) ? -1 : toCheck;
     }
 }

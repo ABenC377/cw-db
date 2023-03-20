@@ -60,11 +60,15 @@ public class DBServer {
             try {
                 ast = new AbstractSyntaxTree(currentCommand);
             } catch (IOException err) {
+                System.out.println("Could not parse");
                 return err.getMessage();
             }
             try {
-                return interpreter.interpret(ast);
+                String queryOutput = interpreter.interpret(ast);
+                System.out.println("SUCCESS!!");
+                return ("[OK]\n" + queryOutput);
             } catch (IOException err) {
+                System.out.println("Could not interpret");
                 return err.getMessage();
             }
         }
@@ -83,7 +87,7 @@ public class DBServer {
     }
 
     private boolean commandIsInvalid(String command) {
-        return (command.contains(";"));
+        return (!command.contains(";"));
     }
 
 
