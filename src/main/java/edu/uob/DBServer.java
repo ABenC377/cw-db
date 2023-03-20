@@ -47,48 +47,26 @@ public class DBServer {
     *
     * <p>This method handles all incoming DB commands and carries out the required actions.
     */
-    public String handleCommand(String command) {
-        // Check that the command string is sensible
-        if (this.commandIsInvalid(command)) {
-            return "[ERROR]: command provided is not in a correct syntax - please close command with a ';'";
-        }
-
+    public String handleCommand(String command) throws IOException {
         // Handle the query commands from the input String onto the temporary instance of the DB
-        ArrayList<String> commands = new ArrayList<>(Arrays.asList(command.split(";")));
-        for (String currentCommand : commands) {
-            AbstractSyntaxTree ast = null;
-            try {
-                ast = new AbstractSyntaxTree(currentCommand);
-            } catch (IOException err) {
-                System.out.println("Could not parse");
-                return err.getMessage();
-            }
-            try {
-                String queryOutput = interpreter.interpret(ast);
-                System.out.println("SUCCESS!!");
-                return ("[OK]\n" + queryOutput);
-            } catch (IOException err) {
-                System.out.println("Could not interpret");
-                return err.getMessage();
-            }
+        AbstractSyntaxTree ast = null;
+        try {
+            ast = new AbstractSyntaxTree(command);
+        } catch (IOException err) {
+            System.out.println("Could not parse");
+            return err.getMessage();
         }
-        /*
-        ________ COMMENTED OUT TO ALLOW BUILD AND TESTING OF OTHER FEATURES __________
-
-        for (AbstractSyntaxTree currentAST : ASTs) {
-            interpreter.interpret(currentAST);
+        try {
+            String queryOutput = interpreter.interpret(ast);
+            System.out.println("SUCCESS!!");
+            return ("[OK]\n" + queryOutput);
+        } catch (IOException err) {
+            System.out.println("Could not interpret");
+            return err.getMessage();
         }
-
-
-         */
-
-        // Output a string to let the user know how the has gone
-        return "";
     }
 
-    private boolean commandIsInvalid(String command) {
-        return (!command.contains(";"));
-    }
+
 
 
 

@@ -264,7 +264,7 @@ public class Parser {
         if (!checkForStrings(resetIndex, false, false, "INSERT ", "INTO ")) {
             return false;
         }
-
+        
         // Check for a table name
         skipWhiteSpace();
         if (!checkForGrammar(NodeType.TABLE_NAME, this::tryPlainText, resetIndex, true)) {
@@ -281,6 +281,7 @@ public class Parser {
         if (!checkForGrammar(NodeType.VALUE_LIST, this::tryValueList, resetIndex, true)) {
             return false;
         }
+        
 
         // Finally, check for the closing parenthesis
         return checkForStrings(resetIndex, true, false, ")");
@@ -294,12 +295,13 @@ public class Parser {
         if (!checkForGrammar(NodeType.VALUE, this::tryValue, resetIndex, true)) {
             return false;
         }
-
+        
         // Then do a while loop to check for additional values
         // -- careful to only reset the most resent child on a failure
         resetIndex = index;
         skipWhiteSpace();
         while (substringIsNext(",")) {
+            skipWhiteSpace();
             if (!checkForGrammar(NodeType.VALUE, this::tryValue, resetIndex, false)) {
                 return true;
             }
@@ -788,7 +790,10 @@ public class Parser {
         }
     }
 
-    private boolean checkForStrings(int resetIndex, boolean clearChildren, boolean leadingWhitespace, String... args) {
+    private boolean checkForStrings(int resetIndex,
+                                    boolean clearChildren,
+                                    boolean leadingWhitespace,
+                                    String... args) {
         skipWhiteSpace();
         if (leadingWhitespace && !previousCharacterWas(' ')) {
             index = resetIndex;
@@ -797,6 +802,7 @@ public class Parser {
             }
             return false;
         }
+        
         for (String arg : args) {
             skipWhiteSpace();
             if (command.startsWith(arg, index)) {
@@ -809,6 +815,7 @@ public class Parser {
                 return false;
             }
         }
+        
         return true;
     }
 
