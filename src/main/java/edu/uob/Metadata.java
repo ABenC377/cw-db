@@ -7,22 +7,27 @@ import java.util.Arrays;
 
 public class Metadata {
     File metadataFile;
+    ArrayList<String> tableNames;
+    ArrayList<Integer> ids;
     
     public Metadata(Path databasePath) throws IOException {
         metadataFile = new File(databasePath.toString() + File.separator +
                 "meta");
-        
-        if (!metadataFile.createNewFile()) {
+        tableNames = new ArrayList<>();
+        ids = new ArrayList<>();
+
+        if (metadataFile.exists()) {
+            loadFromFile();
+        } else if (!metadataFile.createNewFile()) {
             throw new IOException("[ERROR] - unable to create metadata file " +
                 "in " + databasePath);
         }
     }
     
-    public void updatePrimaryKey(String tableName, int newPrimaryKey) throws IOException {
-        // Read the current csv file
+    
+    private void loadFromFile() throws IOException {
         FileReader reader = new FileReader(metadataFile);
         BufferedReader bufferedReader = new BufferedReader(reader);
-        ArrayList<String> lines = new ArrayList<>();
         boolean repeat = true;
         while (repeat) {
             String currentLine = null;
@@ -34,27 +39,42 @@ public class Metadata {
             if (repeat) {
                 ArrayList<String> table =
                     new ArrayList<>(Arrays.asList(currentLine.split(",")));
-                if (table.get(0).equalsIgnoreCase(tableName)) {
-                    table.remove(1);
-                    table.add(String.valueOf(newPrimaryKey));
-                    String newLine = table.get(0) + "," + table.get(1);
-                    lines.add(newLine);
-                } else {
-                    lines.add(currentLine);
-                }
+                tableNames.add(table.get(0));
+                ids.add(Integer.valueOf(table.get(1)));
             }
         }
         bufferedReader.close();
-        
-        // rewrite it with the new values
+    }
+    
+    public void saveMetaData() throws IOException {
         FileWriter writer = new FileWriter(metadataFile);
         BufferedWriter bufferedWriter = new BufferedWriter(writer);
-        for (String line : lines) {
-            bufferedWriter.write(line);
+        for (int i = 0; i < tableNames.size(); i++) {
+            bufferedWriter.write(tableNames.get(i) + "," + ids.get(i));
             bufferedWriter.newLine();
         }
         bufferedWriter.flush();
         bufferedWriter.close();
+    }
+    
+    public void updatePrimaryKey(String tableName, int newPrimaryKey) throws IOException {
+        // Read the current csv file
+        int tableIndex = getTableIndex(tableName);
+        if (tableIndex != -1) {
+            ids.set(tableIndex, newPrimaryKey);
+        } else {
+            throw new IOException("[ERROR] - cannot find table in metadata " +
+                "file");
+        }
+    }
+    
+    private int getTableIndex(String tableName) {
+        for (int i = 0; i < tableNames.size(); i++) {
+            if (tableNames.get(i).equalsIgnoreCase(tableName)) {
+                return i;
+            }
+        }
+        return -1;
     }
     
     public int getPrimaryKey(String tableName) throws IOException {

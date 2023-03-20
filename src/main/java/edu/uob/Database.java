@@ -28,6 +28,10 @@ public class Database {
             databaseName = path.getRoot().toString();
             tables.clear();
             for (File table : path.toFile().listFiles()) {
+                if (table == null) {
+                    throw new IOException("[ERROR] - internal database error " +
+                        "(table has a null pointer)");
+                }
                 addTable(table);
             }
         } else {
@@ -46,7 +50,7 @@ public class Database {
                 Files.createDirectories(path);
             } catch (IOException err) {
                 throw new IOException("[ERROR] - cannot open new database " +
-                    "directory at " + path.toString());
+                    "directory at " + path);
             }
             
             // Create the metadata file in the directory
@@ -74,7 +78,7 @@ public class Database {
     public void dropTable(String tableName) throws IOException {
         boolean tableExists = false;
         for (Table table : tables) {
-            if (table.getName() == tableName) {
+            if (table.getName().equals(tableName)) {
                 tables.remove(table);
                 tableExists = true;
             }
@@ -87,13 +91,12 @@ public class Database {
     }
     
     public boolean tableExists(String tableName) {
-        boolean tableExists = false;
         for (Table table : tables) {
-            if (table.getName() == tableName) {
-                tableExists = true;
+            if (table.getName().equals(tableName)) {
+                return true;
             }
         }
-        return tableExists;
+        return false;
     }
     
     public void addAttributeToTable(String tableName,
@@ -165,9 +168,9 @@ public class Database {
         Table tableTwo = getTable(joinNode.getChild(1).getValue());
         
         if ((joinNode.getChild(2).getNumberChildren() == 2 &&
-            joinNode.getChild(2).getChild(0).getValue() != tableOne.getName()) ||
+            !joinNode.getChild(2).getChild(0).getValue().equals(tableOne.getName())) ||
             (joinNode.getChild(3).getNumberChildren() == 2 &&
-            joinNode.getChild(3).getChild(0).getValue() != tableOne.getName())) {
+            !joinNode.getChild(3).getChild(0).getValue().equals(tableOne.getName()))) {
             throw new IOException("[ERROR] - cannot select an attribute from " +
                 "a table different to the one specified");
         }
@@ -179,18 +182,24 @@ public class Database {
     private String getJoin(Table tableOne,
                            Table tableTwo,
                            String attributeOne,
-                           String attributeTwo) throws IOException {
+                           String attributeTwo) {
         StringBuilder outputTable = new StringBuilder();
         // Make the attribute column
         outputTable.append("id");
         for (String attribute : tableOne.getAttributes()) {
-            if (attribute != "id" && attribute != attributeOne) {
-                outputTable.append("\t|\t" + tableOne.getName() + "." + attribute);
+            if (!attribute.equals("id") && !attribute.equals(attributeOne)) {
+                outputTable.append("\t|\t");
+                outputTable.append(tableOne.getName());
+                outputTable.append(".");
+                outputTable.append(attribute);
             }
         }
         for (String attribute : tableTwo.getAttributes()) {
-            if (attribute != "id" && attribute != attributeTwo) {
-                outputTable.append("\t|\t" + tableTwo.getName() + "." + attribute);
+            if (!attribute.equals("id") && !attribute.equals(attributeTwo)) {
+                outputTable.append("\t|\t");
+                outputTable.append(tableTwo.getName());
+                outputTable.append(".");
+                outputTable.append(attribute);
             }
         }
         outputTable.append(System.lineSeparator());
@@ -203,7 +212,7 @@ public class Database {
             String joinValueOne = rowOne.get(attributeOneIndex);
             for (ArrayList<String> rowTwo : tableTwo.getRows()) {
                 String joinValueTwo = rowTwo.get(attributeTwoIndex);
-                if (joinValueOne == joinValueTwo) {
+                if (joinValueOne.equals(joinValueTwo)) {
                     outputTable.append(makeJoinRow(joinID, rowOne, rowTwo,
                         attributeOneIndex, attributeTwoIndex));
                 }
@@ -222,12 +231,14 @@ public class Database {
         row.append(id);
         for (int i = 1; i < rowOne.size(); i++) {
             if (i != indexOne) {
-                row.append("\t|\t" + rowOne.get(i));
+                row.append("\t|\t");
+                row.append(rowOne.get(i));
             }
         }
         for (int i = 1; i < rowTwo.size(); i++) {
             if (i != indexTwo) {
-                row.append("\t|\t" + rowTwo.get(i));
+                row.append("\t|\t");
+                row.append(rowTwo.get(i));
             }
         }
         row.append(System.lineSeparator());
@@ -239,7 +250,7 @@ public class Database {
         File directory = new File(pathName);
         if (directory.exists()) {
             for (File table : directory.listFiles()) {
-                if (!table.delete()) {
+                if (table == null ||!table.delete()) {
                     throw new IOException("[ERROR] - unable to re-save table "
                         + table.getName());
                 }
@@ -248,6 +259,7 @@ public class Database {
         for (Table table : tables) {
             table.saveTable(pathName);
         }
+        metadata.saveMetaData();
     }
     
     // Static methods
@@ -263,7 +275,7 @@ public class Database {
         
         if (databaseDirectory.exists() && databaseDirectory.isDirectory()) {
             for (File table : databaseDirectory.listFiles()) {
-                if (!table.delete()) {
+                if (table == null || !table.delete()) {
                     throw new IOException("[ERROR] - unable to delete table "
                         + table.getName());
                 }
