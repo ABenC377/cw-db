@@ -64,12 +64,12 @@ public class Interpreter {
     private void handleCreate(Node node) throws IOException {
         // Invalid queries
         if (node.getLastChild().getType() != NodeType.DATABASE_NAME &&
-                node.getLastChild().getType() != NodeType.TABLE_NAME) {
+                node.getChild(0).getType() != NodeType.TABLE_NAME) {
             throw new IOException("[ERROR] = <create> should have one (and " +
                 "only one) argument, which is either a table or database name");
-        } else if (nameIsInvalid(node.getLastChild().getValue())) {
+        } else if (nameIsInvalid(node.getChild(0).getValue())) {
             throw new IOException("[ERROR] - name of " +
-                node.getLastChild().getValue() + " is invalid");
+                node.getChild(0).getValue() + " is invalid");
         }
         // Create the databse/table (depending on child node type)
         if (node.getLastChild().getType() == NodeType.DATABASE_NAME) {
@@ -83,44 +83,34 @@ public class Interpreter {
                     "create a table");
             }
             if (node.getNumberChildren() == 1) {
-                try {
-                    database.addTable(node.getLastChild().getValue());
-                } catch (IOException err) {
-                    throw err;
-                }
+                database.addTable(node.getLastChild().getValue());
             } else {
-                try {
-                    // Make an array of the values of the children to this
-                    // create node, and pass them to the addTable method of
-                    // the database
-                    ArrayList<Node> children = node.getChildren();
-                    String tableName = children.get(0).getValue();
-                    Node[] attributes =
-                        (Node[]) children.get(1).getChildren().toArray();
-                    ArrayList<String> attributeNames = new ArrayList<>();
-                    for (Node attribute : attributes) {
-                        if (attribute.getNumberChildren() == 1) {
-                            attributeNames.add(attribute.getLastChild().getValue());
-                        } else if (attribute.getNumberChildren() == 2) {
-                            if (attribute.getChild(0).getValue() != tableName) {
-                                throw new IOException("[ERROR] - cannot " +
-                                    "create a table with an attribute " +
-                                    "associated with another table");
-                            } else {
-                                attributeNames.add(attribute.getChild(1).getValue());
-                            }
+                // Make an array of the values of the children to this
+                // create node, and pass them to the addTable method of
+                // the database
+                ArrayList<Node> children = node.getChildren();
+                String tableName = children.get(0).getValue();
+                ArrayList<String> attributeNames = new ArrayList<>();
+                for (int i = 0; i < children.get(1).getNumberChildren(); i++) {
+                    Node attribute = children.get(1).getChild(i);
+                    if (attribute.getNumberChildren() == 1) {
+                        attributeNames.add(attribute.getLastChild().getValue());
+                    } else if (attribute.getNumberChildren() == 2) {
+                        if (attribute.getChild(0).getValue() != tableName) {
+                            throw new IOException("[ERROR] - cannot " +
+                                "create a table with an attribute " +
+                                "associated with another table");
                         } else {
-                            throw new IOException("[ERROR] - incorrectly " +
-                                "formed [attribute]");
+                            attributeNames.add(attribute.getChild(1).getValue());
                         }
+                    } else {
+                        throw new IOException("[ERROR] - incorrectly " +
+                            "formed [attribute]");
                     }
-                    String[] attributeNamesArray =
-                        new String[attributeNames.size()];
-                    attributeNames.toArray(attributeNamesArray);
-                    database.addTable(tableName, attributeNamesArray);
-                } catch (IOException err) {
-                    throw err;
                 }
+                String[] attributeNamesArray = new String[attributeNames.size()];
+                attributeNames.toArray(attributeNamesArray);
+                database.addTable(tableName, attributeNamesArray);
             }
         }
     }
