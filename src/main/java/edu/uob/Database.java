@@ -147,8 +147,108 @@ public class Database {
         }
         return table.selectValuesWhere(selectAttributes, condition);
     }
-
     
+    public void updateValues(Node updateNode) throws IOException {
+        Table table = getTable(updateNode.getChild(0).getValue());
+        Node listNode = updateNode.getChild(1);
+        Node conditionNode = updateNode.getChild(2);
+        table.updateTable(listNode, conditionNode);
+    }
+
+    public void deleteRows(Node deleteNode) throws IOException {
+        Table table = getTable(deleteNode.getChild(0).getValue());
+        table.deleteRows(deleteNode.getLastChild());
+    }
+    
+    public String joinTables(Node joinNode) throws IOException {
+        Table tableOne = getTable(joinNode.getChild(0).getValue());
+        Table tableTwo = getTable(joinNode.getChild(1).getValue());
+        
+        if ((joinNode.getChild(2).getNumberChildren() == 2 &&
+            joinNode.getChild(2).getChild(0).getValue() != tableOne.getName()) ||
+            (joinNode.getChild(3).getNumberChildren() == 2 &&
+            joinNode.getChild(3).getChild(0).getValue() != tableOne.getName())) {
+            throw new IOException("[ERROR] - cannot select an attribute from " +
+                "a table different to the one specified");
+        }
+        String attributeOne = joinNode.getChild(2).getLastChild().getValue();
+        String attributeTwo = joinNode.getChild(3).getLastChild().getValue();
+        return getJoin(tableOne, tableTwo, attributeOne, attributeTwo);
+    }
+    
+    private String getJoin(Table tableOne,
+                           Table tableTwo,
+                           String attributeOne,
+                           String attributeTwo) throws IOException {
+        StringBuilder outputTable = new StringBuilder();
+        // Make the attribute column
+        outputTable.append("id");
+        for (String attribute : tableOne.getAttributes()) {
+            if (attribute != "id" && attribute != attributeOne) {
+                outputTable.append("\t|\t" + tableOne.getName() + "." + attribute);
+            }
+        }
+        for (String attribute : tableTwo.getAttributes()) {
+            if (attribute != "id" && attribute != attributeTwo) {
+                outputTable.append("\t|\t" + tableTwo.getName() + "." + attribute);
+            }
+        }
+        outputTable.append(System.lineSeparator());
+        
+        // Now start adding rows
+        int joinID = 1;
+        int attributeOneIndex = tableOne.findIndexOfAttribute(attributeOne);
+        int attributeTwoIndex = tableTwo.findIndexOfAttribute(attributeTwo);
+        for (ArrayList<String> rowOne : tableOne.getRows()) {
+            String joinValueOne = rowOne.get(attributeOneIndex);
+            for (ArrayList<String> rowTwo : tableTwo.getRows()) {
+                String joinValueTwo = rowTwo.get(attributeTwoIndex);
+                if (joinValueOne == joinValueTwo) {
+                    outputTable.append(makeJoinRow(joinID, rowOne, rowTwo,
+                        attributeOneIndex, attributeTwoIndex));
+                }
+            }
+        }
+        
+        return outputTable.toString();
+    }
+    
+    private String makeJoinRow(int id,
+                               ArrayList<String> rowOne,
+                               ArrayList<String> rowTwo,
+                               int indexOne,
+                               int indexTwo) {
+        StringBuilder row = new StringBuilder();
+        row.append(id);
+        for (int i = 1; i < rowOne.size(); i++) {
+            if (i != indexOne) {
+                row.append("\t|\t" + rowOne.get(i));
+            }
+        }
+        for (int i = 1; i < rowTwo.size(); i++) {
+            if (i != indexTwo) {
+                row.append("\t|\t" + rowTwo.get(i));
+            }
+        }
+        row.append(System.lineSeparator());
+        return row.toString();
+    }
+    
+    public void saveState() throws IOException {
+        String pathName = "databases" + File.separator + databaseName;
+        File directory = new File(pathName);
+        if (directory.exists()) {
+            for (File table : directory.listFiles()) {
+                if (!table.delete()) {
+                    throw new IOException("[ERROR] - unable to re-save table "
+                        + table.getName());
+                }
+            }
+        }
+        for (Table table : tables) {
+            table.saveTable(pathName);
+        }
+    }
     
     // Static methods
     public static boolean exists(String databaseName) {
@@ -157,19 +257,21 @@ public class Database {
         return Files.exists(databasePath);
     }
     
-    public static void delete(String databaseName) throws IOException {
-        File databaseDirectory = new File("databases" + File.separator + databaseName);
+    public static void delete(String name) throws IOException {
+        String pathName = "databases" + File.separator + name;
+        File databaseDirectory = new File(pathName);
         
         if (databaseDirectory.exists() && databaseDirectory.isDirectory()) {
             for (File table : databaseDirectory.listFiles()) {
                 if (!table.delete()) {
-                    throw new IOException("[ERROR] - unable to delete table " + table.toString());
+                    throw new IOException("[ERROR] - unable to delete table "
+                        + table.getName());
                 }
             }
         }
         
         if (databaseDirectory.exists() && !databaseDirectory.delete()) {
-            throw new IOException("[ERROR] - unable to delete database " + databaseName);
+            throw new IOException("[ERROR] - unable to delete database " + name);
         }
     }
 }

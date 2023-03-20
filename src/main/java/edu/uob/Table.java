@@ -133,7 +133,7 @@ public class Table {
         return tableName;
     }
     
-    private int findIndexOfAttribute(String attributeName) {
+    public int findIndexOfAttribute(String attributeName) {
         int index = 0;
         for (String currentName : attributeNames) {
             if (currentName.toLowerCase() == attributeName.toLowerCase()) {
@@ -217,13 +217,163 @@ public class Table {
     
     private boolean passesCondition(ArrayList<String> row,
                                     Node conditionNode) throws IOException {
-        // check
-        if (conditionNode.getNumberChildren() != 3) {
+        // Check condition node is correctly formed
+        if (conditionNode.getNumberChildren() == 1 &&
+            conditionNode.getLastChild().getType() == NodeType.CONDITION) {
+            return passesCondition(row, conditionNode.getLastChild());
+        } else if (conditionNode.getNumberChildren() != 3) {
             throw new IOException("[ERROR] - incorrectly formed condition " +
                 "statement");
         }
         
+        // Recursively descend the condition tree
+        if (conditionNode.getChild(0).getType() == NodeType.ATTRIBUTE_NAME) {
+            return solveComparison(row, conditionNode);
+        } else if (conditionNode.getChild(1).getValue() == "AND") {
+            return (passesCondition(row, conditionNode.getChild(0)) &&
+                    passesCondition(row, conditionNode.getChild(2)));
+        } else if (conditionNode.getChild(1).getValue() == "OR") {
+            return (passesCondition(row, conditionNode.getChild(0)) ||
+                    passesCondition(row, conditionNode.getChild(2)));
+        } else {
+            throw new IOException("[ERROR] - incorrectly formed condition " +
+                "statement");
+        }
         
+    }
+    
+    private boolean solveComparison(ArrayList<String> row,
+                                    Node conditionNode) throws IOException {
+        // Check for invalid condition node (we have already checked child()
+        // before this is called)
+        if (conditionNode.getChild(1).getType() != NodeType.COMPARATOR ||
+            conditionNode.getChild(2).getType() != NodeType.VALUE) {
+            throw new IOException("[ERROR] - incorrectly formed condition " +
+                "statement");
+        } else if (conditionNode.getChild(0).getNumberChildren() == 2 &&
+            conditionNode.getChild(0).getChild(0).getValue() != tableName) {
+            throw new IOException("[ERROR] - cannot access attribute from " +
+                "different table");
+        }
+        
+        // Get the string from the table that we are comparing, and the
+        // result of the comparison
+        String argument = row.get(findIndexOfAttribute(conditionNode
+                                .getChild(0).getLastChild().getValue()));
+        int comparisonResult = argument.compareTo(conditionNode
+                .getChild(2).getLastChild().getValue());
+        // Now a simple switch statement on the basis of the value of the
+        // comparator node
+        switch(conditionNode.getChild(1).getValue()) {
+            case "<" -> {
+                return (comparisonResult < 0);
+            }
+            case ">" -> {
+                return (comparisonResult > 0);
+            }
+            case "<=" -> {
+                return (comparisonResult <= 0);
+            }
+            case ">=" -> {
+                return (comparisonResult >= 0);
+            }
+            case "==" -> {
+                return (comparisonResult == 0);
+            }
+            case "!=" -> {
+                return (comparisonResult != 0);
+            }
+            case "LIKE" -> {
+                return (argument.contains(conditionNode.getChild(2)
+                        .getLastChild().getValue()));
+            }
+            default -> {
+                return false;
+            }
+        }
+    }
+    
+    public void updateTable(Node listNode,
+                            Node conditionNode) throws IOException {
+        // Set up array lists of attribute indices and values so we can
+        // easily iterate over them later on
+        ArrayList<Integer> attributeIndexes = new ArrayList<>();
+        ArrayList<String> values = new ArrayList<>();
+        
+        for (int i = 0; i < listNode.getNumberChildren(); i++) {
+            // Check for obvious errors in the query
+            if (findIndexOfAttribute(listNode.getChild(i).getChild(0)
+                .getLastChild().getValue()) == -1) {
+                throw new IOException("[ERROR] - cannot update attribute that" +
+                    " does not exist in the listed table");
+            } else if (listNode.getChild(i).getChild(0)
+                       .getNumberChildren() == 2 &&
+                       listNode.getChild(i).getChild(0).getChild(0)
+                       .getValue() != tableName) {
+                throw new IOException("[ERROR] - cannot update attribute in " +
+                    "table other than the one listed");
+            }
+            // Populate the array lists
+            attributeIndexes.add(findIndexOfAttribute(listNode.getChild(i)
+                .getChild(0).getLastChild().getValue()));
+            values.add(listNode.getChild(i).getChild(1).getValue());
+        }
+        
+        // Make the changes to each row if the row passes the condition
+        for (ArrayList<String> row : rows) {
+            if (passesCondition(row, conditionNode)) {
+                for (int i = 0; i < attributeIndexes.size(); i++) {
+                    row.set(attributeIndexes.get(i), values.get(i));
+                }
+            }
+        }
+    }
+    
+    public void deleteRows(Node conditionNode) throws IOException {
+        ArrayList<ArrayList<String>> rowsToDelete = new ArrayList<>();
+        for (ArrayList<String> row : rows) {
+            if (passesCondition(row, conditionNode)) {
+                rowsToDelete.add(row);
+            }
+        }
+        
+        for (ArrayList<String> rowToDelete : rowsToDelete) {
+            rows.remove(rowToDelete);
+        }
+    }
+    
+    public ArrayList<String> getAttributes() {
+        return attributeNames;
+    }
+    
+    public ArrayList<ArrayList<String>> getRows() {
+        return rows;
+    }
+    
+    public void saveTable(String databasePathName) throws IOException {
+        File tableFile =
+            new File(databasePathName + File.separator + tableName);
+        tableFile.createNewFile();
+        
+        // Bosh in the attribute names
+        FileWriter writer = new FileWriter(tableFile);
+        BufferedWriter bufferedWriter = new BufferedWriter(writer);
+        for (String attribute : attributeNames) {
+            bufferedWriter.write(attribute + "\t");
+        }
+        bufferedWriter.newLine();
+        
+        // Bang in the rows
+        for (ArrayList<String> row : rows) {
+            for (String value : row) {
+                bufferedWriter.write("value" + "\t");
+            }
+            bufferedWriter.newLine();
+        }
+        
+        // Close things off
+        bufferedWriter.flush();
+        bufferedWriter.close();
     }
 }
 

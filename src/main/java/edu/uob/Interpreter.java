@@ -38,7 +38,7 @@ public class Interpreter {
             default -> throw new IOException("[ERROR] - invalid query");
         }
         
-        saveState();
+        database.saveState();
         return "";
     }
     
@@ -192,10 +192,38 @@ public class Interpreter {
                 " SELECT command");
         }
     }
+    
+    private void handleUpdate(Node updateNode) throws IOException {
+        if (updateNode.getNumberChildren() == 3) {
+            database.updateValues(updateNode);
+        } else {
+            throw new IOException("[ERROR] - UPDATE command requires three " +
+                "arguments: table name, name value list, and condition");
+        }
+    }
+    
+    private void handleDelete(Node deleteNode) throws IOException {
+        if (deleteNode.getNumberChildren() == 2) {
+            database.deleteRows(deleteNode);
+        } else {
+            throw new IOException("[ERROR] - DELETE command requires two " +
+                "arguments: table name and condition");
+        }
+    }
+    
+    private String handleJoin(Node joinNode) throws IOException {
+        if (joinNode.getNumberChildren() == 4) {
+            return database.joinTables(joinNode);
+        } else {
+            throw new IOException("[ERROR] - JOIN command requires four " +
+                "arguments: two table names, and two attribute names");
+        }
+    }
 
     /*
     ____________ HELPER METHODS! ___________
      */
+
     
     private boolean nameIsInvalid(String name) {
         return (name.equalsIgnoreCase("USE") ||
