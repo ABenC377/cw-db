@@ -52,16 +52,17 @@ public class DBServer {
         AbstractSyntaxTree ast = null;
         try {
             ast = new AbstractSyntaxTree(command);
+            System.out.println(ast);
         } catch (IOException err) {
-            System.out.println("Could not parse");
+            System.out.println("Could not parse"); // debugging
             return err.getMessage();
         }
         try {
             String queryOutput = interpreter.interpret(ast);
-            System.out.println("SUCCESS!!");
+            System.out.println("SUCCESS!!"); // debugging
             return ("[OK]\n" + queryOutput);
         } catch (IOException err) {
-            System.out.println("Could not interpret");
+            System.out.println("Could not interpret - " + err.getMessage()); // debugging
             return err.getMessage();
         }
     }

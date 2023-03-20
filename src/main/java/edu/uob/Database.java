@@ -31,8 +31,11 @@ public class Database {
                 if (table == null) {
                     throw new IOException("[ERROR] - internal database error " +
                         "(table has a null pointer)");
+                } else {
+                    if (!table.getName().equals("meta")) {
+                        addTable(table);
+                    }
                 }
-                addTable(table);
             }
         } else {
             throw new IOException("[ERROR] - cannot open database at " +
@@ -246,11 +249,13 @@ public class Database {
     }
     
     public void saveState() throws IOException {
-        String pathName = "databases" + File.separator + databaseName;
+        String pathName = ("databases" + File.pathSeparator + databaseName);
         File directory = new File(pathName);
         if (directory.exists()) {
             for (File table : directory.listFiles()) {
-                if (table == null ||!table.delete()) {
+                if (table == null) {
+                    throw new IOException("[ERROR] - table is null");
+                }  else if (!table.delete()) {
                     throw new IOException("[ERROR] - unable to re-save table "
                         + table.getName());
                 }
@@ -265,12 +270,12 @@ public class Database {
     // Static methods
     public static boolean exists(String databaseName) {
         Path databasePath =
-            Paths.get("databases" + File.separator + databaseName);
+            Paths.get("databases" + File.pathSeparator + databaseName);
         return Files.exists(databasePath);
     }
     
     public static void delete(String name) throws IOException {
-        String pathName = "databases" + File.separator + name;
+        String pathName = "databases" + File.pathSeparator + name;
         File databaseDirectory = new File(pathName);
         
         if (databaseDirectory.exists() && databaseDirectory.isDirectory()) {

@@ -48,7 +48,7 @@ public class Table {
             this.attributeNames = new ArrayList<>(Arrays.asList(firstRow.split("\t")));
         } else {
             throw new IOException("[ERROR] - Cannot open table file that is " +
-                "empty");
+                "empty at " + inputFile.getName());
         }
 
         // Populate the rows while buffer reader still pumping out lines
@@ -352,7 +352,7 @@ public class Table {
     
     public void saveTable(String databasePathName) throws IOException {
         File tableFile =
-            new File(databasePathName + File.separator + tableName);
+            new File(databasePathName + File.pathSeparator + tableName);
         tableFile.createNewFile();
         
         // Bosh in the attribute names
