@@ -1,9 +1,7 @@
 package edu.uob;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 
 import static java.io.File.separator;
 
@@ -74,7 +72,7 @@ public class Interpreter {
         // If a table name, create a table
         if (node.getChild(0).getType() == NodeType.TABLE_NAME) {
             // Catch error of creating a table outside of a database
-            if (database.getDatabaseName() == "") {
+            if (database.getDatabaseName().equals("")) {
                 throw new IOException("[ERROR] - must be using a database to " +
                     "create a table");
             }
@@ -110,7 +108,7 @@ public class Interpreter {
             if (Database.exists(databaseName)) {
                 Database.delete(databaseName);
             }
-            if (database.getDatabaseName() == databaseName) {
+            if (database.getDatabaseName().equals(databaseName)) {
                 database.clearDatabase();
             }
         } else {
@@ -134,10 +132,10 @@ public class Interpreter {
         
         Node typeNode = alterNode.getChild(1);
         Node attributeNode = alterNode.getChild(2);
-        if (typeNode.getValue() == "ADD") {
+        if (typeNode.getValue().equals("ADD")) {
             database.addAttributeToTable(tableNode.getValue(),
                 attributeNode);
-        } else if (typeNode.getValue() == "DROP") {
+        } else if (typeNode.getValue().equals("DROP")) {
             database.dropAttributeFromTable(tableNode.getValue(),
                 attributeNode);
         } else {

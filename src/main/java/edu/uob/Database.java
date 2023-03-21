@@ -30,7 +30,7 @@ public class Database {
         if (databaseDirectory.exists()) {
             databaseName = name;
             tables.clear();
-            for (File table : databaseDirectory.listFiles()) {
+            for (File table : Objects.requireNonNull(databaseDirectory.listFiles())) {
                 if (table == null) {
                     throw new IOException("[ERROR] - internal database error " +
                         "(table has a null pointer)");
@@ -140,8 +140,9 @@ public class Database {
     public String selectValues(Node attributeList,
                                Node tableName) throws IOException {
         Table table = getTable(tableName.getValue());
-        if (attributeList.getValue() == "*") {
-            return table.selectValues();
+        if (attributeList.getValue() != null &&
+            attributeList.getValue().equals("*")) {
+            return table.toString();
         } else {
             ArrayList<String> selectAttributes = new ArrayList<>();
             for (int i = 0; i < attributeList.getNumberChildren(); i++) {
@@ -155,7 +156,8 @@ public class Database {
                                     Node tableName,
                                     Node condition) throws IOException {
         Table table = getTable(tableName.getValue());
-        if (attributeList.getValue() == "*") {
+        if (attributeList.getValue() != null &&
+            attributeList.getValue().equals("*")) {
             return table.selectValuesWhere(condition);
         } else {
             ArrayList<String> selectAttributes = new ArrayList<>();
@@ -266,7 +268,6 @@ public class Database {
             File directory = new File(pathName);
             if (directory.exists()) {
                 for (File table : Objects.requireNonNull(directory.listFiles())) {
-                    table.getName();
                     if (!table.getName().equals("meta") && !table.delete()) {
                         throw new IOException("[ERROR] - unable to re-save table "
                             + table.getName());
@@ -292,7 +293,7 @@ public class Database {
         File databaseDirectory = new File(pathName);
     
         if (databaseDirectory.exists() && databaseDirectory.isDirectory()) {
-            for (File table : databaseDirectory.listFiles()) {
+            for (File table : Objects.requireNonNull(databaseDirectory.listFiles())) {
                 if (table == null || !table.delete()) {
                     throw new IOException("[ERROR] - unable to delete table "
                         + table.getName());

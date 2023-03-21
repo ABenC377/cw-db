@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Table {
-    private String tableName;
-    private ArrayList<String> attributeNames;
-    private ArrayList<ArrayList<String>> rows;
+    private final String tableName;
+    private final ArrayList<String> attributeNames;
+    private final ArrayList<ArrayList<String>> rows;
     private int primaryKeyValue = 1;
 
     // For creating a table with just a table name
-    public Table(String name) throws IOException {
+    public Table(String name) {
         this.tableName = name;
         this.attributeNames = new ArrayList<>();
         attributeNames.add("id");
@@ -44,7 +44,7 @@ public class Table {
         }
 
         // Populate the rows while buffer reader still pumping out lines
-        String current = null;
+        String current;
         rows = new ArrayList<>();
         while ((current = bReader.readLine()) != null) {
             rows.add(new ArrayList<>(Arrays.asList(current.split("\t"))));
@@ -55,11 +55,7 @@ public class Table {
             inputFile.getName().indexOf('.'));
 
         // Close things up like a responsible programmer
-        try {
-            bReader.close();
-        } catch (IOException err) {
-            throw err;
-        }
+        bReader.close();
     }
     
     public void addAttribute(Node attributeNode) throws IOException {
@@ -68,7 +64,7 @@ public class Table {
         }
         
         if (attributeNode.getChild(0).getType() == NodeType.TABLE_NAME) {
-            if (attributeNode.getChild(0).getValue() != tableName) {
+            if (!attributeNode.getChild(0).getValue().equals(tableName)) {
                 throw new IOException("[ERROR] - attribute's table name must " +
                     "be the same as the name of the table that it is being " +
                     "added to");
@@ -93,12 +89,11 @@ public class Table {
         }
     
         // Check it doesn't relate to a different table
-        if (attributeNode.getChild(0).getType() == NodeType.TABLE_NAME) {
-            if (attributeNode.getChild(0).getValue() != tableName) {
-                throw new IOException("[ERROR] - attribute's table name must " +
-                    "be the same as the name of the table that it is being " +
-                    "added to");
-            }
+        if ((attributeNode.getChild(0).getType() == NodeType.TABLE_NAME) &&
+            (!attributeNode.getChild(0).getValue().equals(tableName))) {
+            throw new IOException("[ERROR] - attribute's table name must " +
+                "be the same as the name of the table that it is being " +
+                "added to");
         }
         
         // Check attribute exists in this table
@@ -149,7 +144,7 @@ public class Table {
         rows.add(newRow);
     }
     
-    public String selectValues(ArrayList<String> selectAttributes) throws IOException {
+    public String selectValues(ArrayList<String> selectAttributes) {
         ArrayList<Integer> attributeIndexes = new ArrayList<>();
         for (String attributeName : selectAttributes) {
             attributeIndexes.add(findIndexOfAttribute(attributeName));
@@ -170,25 +165,6 @@ public class Table {
             output.append(System.lineSeparator());
         }
         
-        return output.toString();
-    }
-    
-    public String selectValues() throws IOException {
-        
-        StringBuilder output = new StringBuilder();
-        for (String attributeName : attributeNames) {
-            output.append(attributeName);
-            output.append("\t");
-        }
-        output.append(System.lineSeparator());
-    
-        for (ArrayList<String> row : rows) {
-            for (String value : row) {
-                output.append(value);
-                output.append("\t");
-            }
-            output.append(System.lineSeparator());
-        }
         return output.toString();
     }
     
@@ -257,10 +233,10 @@ public class Table {
         // Recursively descend the condition tree
         if (conditionNode.getChild(0).getType() == NodeType.ATTRIBUTE_NAME) {
             return solveComparison(row, conditionNode);
-        } else if (conditionNode.getChild(1).getValue() == "AND") {
+        } else if (conditionNode.getChild(1).getValue().equals("AND")) {
             return (passesCondition(row, conditionNode.getChild(0)) &&
                     passesCondition(row, conditionNode.getChild(2)));
-        } else if (conditionNode.getChild(1).getValue() == "OR") {
+        } else if (conditionNode.getChild(1).getValue().equals("OR")) {
             return (passesCondition(row, conditionNode.getChild(0)) ||
                     passesCondition(row, conditionNode.getChild(2)));
         } else {
@@ -279,7 +255,7 @@ public class Table {
             throw new IOException("[ERROR] - incorrectly formed condition " +
                 "statement");
         } else if (conditionNode.getChild(0).getNumberChildren() == 2 &&
-            conditionNode.getChild(0).getChild(0).getValue() != tableName) {
+            !conditionNode.getChild(0).getChild(0).getValue().equals(tableName)) {
             throw new IOException("[ERROR] - cannot access attribute from " +
                 "different table");
         }
@@ -336,8 +312,8 @@ public class Table {
                     " does not exist in the listed table");
             } else if (listNode.getChild(i).getChild(0)
                        .getNumberChildren() == 2 &&
-                       listNode.getChild(i).getChild(0).getChild(0)
-                       .getValue() != tableName) {
+                       !listNode.getChild(i).getChild(0).getChild(0)
+                       .getValue().equals(tableName)) {
                 throw new IOException("[ERROR] - cannot update attribute in " +
                     "table other than the one listed");
             }
@@ -384,7 +360,10 @@ public class Table {
         File tableFile =
             new File(tablePath);
         try {
-            tableFile.createNewFile();
+            if (!tableFile.createNewFile()) {
+                throw new IOException("[ERROR] - cannot save table file to " +
+                    "the database directory");
+            }
         } catch (IOException err) {
             throw new IOException("[ERROR] - cannot save table file to the " +
                 "database directory");
