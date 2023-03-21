@@ -126,12 +126,10 @@ public class Table {
     }
     
     public int findIndexOfAttribute(String attributeName) {
-        int index = 0;
-        for (String currentName : attributeNames) {
-            if (currentName.toLowerCase() == attributeName.toLowerCase()) {
-                return index;
+        for (int i = 0; i < attributeNames.size(); i++) {
+            if (attributeNames.get(i).equalsIgnoreCase(attributeName)) {
+                return i;
             }
-            index++;
         }
         return -1;
     }
@@ -204,7 +202,10 @@ public class Table {
                                     Node condition) throws IOException {
         ArrayList<Integer> attributeIndexes = new ArrayList<>();
         for (String attributeName : selectAttributes) {
-            attributeIndexes.add(findIndexOfAttribute(attributeName));
+            int attributeIndex = findIndexOfAttribute(attributeName);
+            if (attributeIndex != -1) {
+                attributeIndexes.add(attributeIndex);
+            }
         }
     
         StringBuilder output = new StringBuilder();

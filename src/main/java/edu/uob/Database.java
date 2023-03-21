@@ -153,7 +153,7 @@ public class Database {
         } else {
             ArrayList<String> selectAttributes = new ArrayList<>();
             for (int i = 0; i < attributeList.getNumberChildren(); i++) {
-                selectAttributes.add(attributeList.getChild(i).getValue());
+                selectAttributes.add(attributeList.getChild(i).getChild(0).getValue());
             }
             return table.selectValuesWhere(selectAttributes, condition);
         }
