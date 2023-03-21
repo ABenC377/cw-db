@@ -281,6 +281,24 @@ public class Database {
         }
     }
     
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Database: ").append(databaseName);
+        builder.append(System.lineSeparator());
+        builder.append("__________________________________");
+        builder.append(System.lineSeparator());
+        for (Table table : tables) {
+            builder.append("Table - ").append(table.getName());
+            builder.append(System.lineSeparator());
+            builder.append(table);
+            builder.append(System.lineSeparator());
+            builder.append(System.lineSeparator());
+        }
+        
+        return builder.toString();
+    }
+    
     // Static methods
     public static boolean exists(String databaseName) {
         Path databasePath =

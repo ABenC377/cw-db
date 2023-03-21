@@ -1,5 +1,6 @@
 package edu.uob;
 
+import javax.xml.crypto.Data;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -12,6 +13,7 @@ import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 
 /** This class implements the DB server. */
 public class DBServer {
@@ -71,7 +73,20 @@ public class DBServer {
             Database.delete(database.getName());
         }
     }
-
+    
+    public void printDatabases() throws IOException {
+        Database database = new Database();
+        File databaseDirectory =
+            new File(Paths.get("databases").toAbsolutePath().toString());
+        if (!databaseDirectory.exists()) {
+            System.out.println("No databases");
+        }
+        
+        for (File db : Objects.requireNonNull(databaseDirectory.listFiles())) {
+            database.loadDatabase(db.getName());
+            System.out.println(database);
+        }
+    }
 
 
     //  === Methods below handle networking aspects of the project - you will not need to change these ! ===
