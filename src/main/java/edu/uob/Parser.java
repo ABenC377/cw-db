@@ -487,10 +487,10 @@ public class Parser {
     When I run out of these groupings, or I'm moved to the parent of the original condition node, I'm done.
 
     This makes sure that all the layering of conditions is transferred to the
-     AST.  However, it does allow some incorrect groupings to pass.
-     Nonetheless, these are caught by the interpreter
+     AST.  However, it does allow some incorrect groupings to pass
      */
     private boolean tryCondition() {
+        Node startingNode = current;
         int startingIndex = index;
         // Check for the first comparator group (i.e., [AttributeName] [Comparator] [Value])
         int resetIndex = index;
@@ -519,14 +519,10 @@ public class Parser {
             }
             resetIndex = index;
         }
-        
-        if (skipWhiteSpaceAndCheckParentheses()) {
-            index = resetIndex;
-            return true;
-        } else {
-            index = startingIndex;
-            return false;
-        }
+        index = resetIndex;
+        skipWhiteSpaceAndCheckParentheses();
+        return (current == startingNode && evenBrackets(startingIndex, index));
+
     }
 
     private boolean tryConditionIndividual() {
@@ -540,6 +536,18 @@ public class Parser {
         }
         skipWhiteSpace();
         return (checkForGrammar(NodeType.VALUE, this::tryValue, resetIndex, true));
+    }
+    
+    private boolean evenBrackets(int start, int end) {
+        int openBrackets = 0;
+        for (int i = start; i < end; i++) {
+            if (command.charAt(i) == '(') {
+                openBrackets++;
+            } else if (command.charAt(i) == ')') {
+                openBrackets--;
+            }
+        }
+        return (openBrackets == 0);
     }
 
     // <WildAttribList> ::= <AttributeList> | "*"
@@ -777,8 +785,6 @@ public class Parser {
                 index++;
                 if (current.getParent().getType() == NodeType.CONDITION) {
                     current = current.getParent();
-                } else {
-                    return false;
                 }
             } else if (Character.isWhitespace(command.charAt(index))) {
                 index++;

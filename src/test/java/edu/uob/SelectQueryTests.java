@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SelectQueryTests {
     DBServer server;
@@ -42,7 +43,25 @@ public class SelectQueryTests {
     }
     
     @Test
-    public void testNestedConditions() {
-        assert(sendCommandToServer("SELECT mark FROM marks WHERE ();").contains("[ERROR]"));
+    public void testInvalidNestedConditions_emptyBrackets() {
+        assertTrue(sendCommandToServer("SELECT mark FROM marks WHERE ();").contains("[ERROR]"));
+    }
+    
+    @Test
+    public void testInvalidNestedConditions_openParentheses() {
+        assertTrue(sendCommandToServer("SELECT mark FROM marks WHERE (pass " +
+            "== true;").contains("[ERROR]"));
+    }
+    
+    @Test
+    public void testInvalidNestedConditions_overClosedParentheses() {
+        assertTrue(sendCommandToServer("SELECT mark FROM marks WHERE (pass " +
+            "== true));").contains("[ERROR]"));
+    }
+    
+    @Test
+    public void testValidNestedConditions_one() {
+        assertTrue(sendCommandToServer("SELECT mark FROM marks WHERE (pass ==" +
+            " true);").contains("[OK]"));
     }
 }
