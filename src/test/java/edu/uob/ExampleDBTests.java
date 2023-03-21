@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
 import java.time.Duration;
 
 public class ExampleDBTests {
@@ -16,6 +18,11 @@ public class ExampleDBTests {
     @BeforeEach
     public void setup() {
         server = new DBServer();
+        try {
+            server.dropAll();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // Random name generator - useful for testing "bare earth" queries (i.e. where tables don't previously exist)

@@ -165,18 +165,38 @@ public class Table {
         StringBuilder output = new StringBuilder();
         for (int index : attributeIndexes) {
             output.append(attributeNames.get(index));
-            output.append("\t|\t");
+            output.append("\t");
         }
         output.append(System.lineSeparator());
         
         for (ArrayList<String> row : rows) {
             for (int index : attributeIndexes) {
                 output.append(row.get(index));
-                output.append("\t|\t");
+                output.append("\t");
             }
             output.append(System.lineSeparator());
         }
         
+        return output.toString();
+    }
+    
+    public String selectValues() throws IOException {
+    
+        StringBuilder output = new StringBuilder();
+        for (String attributeName : attributeNames) {
+            output.append(attributeName);
+            output.append("\t");
+        }
+        output.append(System.lineSeparator());
+    
+        for (ArrayList<String> row : rows) {
+            for (String value : row) {
+                output.append(value);
+                output.append("\t");
+            }
+            output.append(System.lineSeparator());
+        }
+    
         return output.toString();
     }
     
@@ -190,7 +210,7 @@ public class Table {
         StringBuilder output = new StringBuilder();
         for (int index : attributeIndexes) {
             output.append(attributeNames.get(index));
-            output.append("\t|\t");
+            output.append("\t");
         }
         output.append(System.lineSeparator());
     
@@ -198,12 +218,33 @@ public class Table {
             if (passesCondition(row, condition)) {
                 for (int index : attributeIndexes) {
                     output.append(row.get(index));
-                    output.append("\t|\t");
+                    output.append("\t");
                 }
                 output.append(System.lineSeparator());
             }
         }
     
+        return output.toString();
+    }
+    
+    public String selectValuesWhere(Node condition) throws IOException {
+        StringBuilder output = new StringBuilder();
+        for (String attributeName : attributeNames) {
+            output.append(attributeName);
+            output.append("\t");
+        }
+        output.append(System.lineSeparator());
+        
+        for (ArrayList<String> row : rows) {
+            if (passesCondition(row, condition)) {
+                for (String value : row) {
+                    output.append(value);
+                    output.append("\t");
+                }
+                output.append(System.lineSeparator());
+            }
+        }
+        
         return output.toString();
     }
     
@@ -348,7 +389,6 @@ public class Table {
         File tableFile =
             new File(tablePath);
         try {
-            System.out.println(tablePath);
             tableFile.createNewFile();
         } catch (IOException err) {
             throw new IOException("[ERROR] - cannot save table file to the " +
@@ -362,7 +402,6 @@ public class Table {
             bufferedWriter.write(attribute + "\t");
         }
         bufferedWriter.newLine();
-        System.out.println(rows);
         
         // Bang in the rows
         for (ArrayList<String> row : rows) {

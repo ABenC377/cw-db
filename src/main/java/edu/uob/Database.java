@@ -133,22 +133,30 @@ public class Database {
     public String selectValues(Node attributeList,
                                Node tableName) throws IOException {
         Table table = getTable(tableName.getValue());
-        ArrayList<String> selectAttributes = new ArrayList<>();
-        for (int i = 0; i < attributeList.getNumberChildren(); i++) {
-            selectAttributes.add(attributeList.getChild(i).getValue());
+        if (attributeList.getValue() == "*") {
+            return table.selectValues();
+        } else {
+            ArrayList<String> selectAttributes = new ArrayList<>();
+            for (int i = 0; i < attributeList.getNumberChildren(); i++) {
+                selectAttributes.add(attributeList.getChild(i).getValue());
+            }
+            return table.selectValues(selectAttributes);
         }
-        return table.selectValues(selectAttributes);
     }
     
     public String selectValuesWhere(Node attributeList,
                                     Node tableName,
                                     Node condition) throws IOException {
         Table table = getTable(tableName.getValue());
-        ArrayList<String> selectAttributes = new ArrayList<>();
-        for (int i = 0; i < attributeList.getNumberChildren(); i++) {
-            selectAttributes.add(attributeList.getChild(i).getValue());
+        if (attributeList.getValue() == "*") {
+            return table.selectValuesWhere(condition);
+        } else {
+            ArrayList<String> selectAttributes = new ArrayList<>();
+            for (int i = 0; i < attributeList.getNumberChildren(); i++) {
+                selectAttributes.add(attributeList.getChild(i).getValue());
+            }
+            return table.selectValuesWhere(selectAttributes, condition);
         }
-        return table.selectValuesWhere(selectAttributes, condition);
     }
     
     public void updateValues(Node updateNode) throws IOException {
@@ -246,24 +254,23 @@ public class Database {
     }
     
     public void saveState() throws IOException {
-        String pathName = ("databases" + File.separator + databaseName);
-        System.out.println("database name is " + databaseName);
-        System.out.println(pathName);
-        File directory = new File(pathName);
-        if (directory.exists()) {
-            for (File table : directory.listFiles()) {
-                if (table == null) {
-                    throw new IOException("[ERROR] - table is null");
-                }  else if (!table.delete()) {
-                    throw new IOException("[ERROR] - unable to re-save table "
-                        + table.getName());
+        if (!databaseName.equals("")) {
+            String pathName = ("databases" + File.separator + databaseName);
+            File directory = new File(pathName);
+            if (directory.exists()) {
+                for (File table : Objects.requireNonNull(directory.listFiles())) {
+                    table.getName();
+                    if (!table.getName().equals("meta") && !table.delete()) {
+                        throw new IOException("[ERROR] - unable to re-save table "
+                            + table.getName());
+                    }
                 }
             }
+            for (Table table : tables) {
+                table.saveTable(pathName);
+            }
+            metadata.saveMetaData();
         }
-        for (Table table : tables) {
-            table.saveTable(pathName);
-        }
-        metadata.saveMetaData();
     }
     
     // Static methods

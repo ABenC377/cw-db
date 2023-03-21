@@ -52,24 +52,25 @@ public class DBServer {
         AbstractSyntaxTree ast = null;
         try {
             ast = new AbstractSyntaxTree(command);
-            System.out.println(ast);
+            System.out.println(ast); // debugging
         } catch (IOException err) {
-            System.out.println("Could not parse"); // debugging
             return err.getMessage();
         }
         try {
             String queryOutput = interpreter.interpret(ast);
-            System.out.println("SUCCESS!!"); // debugging
-            System.out.println("[OK]\n" + queryOutput);
             return ("[OK]\n" + queryOutput);
         } catch (IOException err) {
-            System.out.println("Could not interpret - " + err); //
-            // debugging
             return err.getMessage();
         }
     }
 
 
+    public void dropAll() throws IOException {
+        File databasesDirectory = new File(Paths.get("databases").toAbsolutePath().toString());
+        for (File database : databasesDirectory.listFiles()) {
+            Database.delete(database.getName());
+        }
+    }
 
 
 
