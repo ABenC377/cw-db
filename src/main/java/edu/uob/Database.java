@@ -23,11 +23,13 @@ public class Database {
         databaseName = "";
     }
     
-    public void loadDatabase(Path path) throws IOException {
-        if (Files.exists(path)) {
-            databaseName = path.getRoot().toString();
+    public void loadDatabase(String name) throws IOException {
+        String path = "databases" + File.separator + name;
+        File databaseDirectory = new File(path);
+        if (databaseDirectory.exists()) {
+            databaseName = name;
             tables.clear();
-            for (File table : path.toFile().listFiles()) {
+            for (File table : databaseDirectory.listFiles()) {
                 if (table == null) {
                     throw new IOException("[ERROR] - internal database error " +
                         "(table has a null pointer)");
@@ -63,11 +65,6 @@ public class Database {
     
     public void addTable(String tableName) throws IOException {
         tables.add(new Table(tableName));
-    }
-    
-    public void addTable(String name,
-                         String[] attributes) throws IOException {
-        tables.add(new Table(name, attributes));
     }
     
     private void addTable(File table) throws IOException {
@@ -249,7 +246,9 @@ public class Database {
     }
     
     public void saveState() throws IOException {
-        String pathName = ("databases" + File.pathSeparator + databaseName);
+        String pathName = ("databases" + File.separator + databaseName);
+        System.out.println("database name is " + databaseName);
+        System.out.println(pathName);
         File directory = new File(pathName);
         if (directory.exists()) {
             for (File table : directory.listFiles()) {
@@ -270,14 +269,14 @@ public class Database {
     // Static methods
     public static boolean exists(String databaseName) {
         Path databasePath =
-            Paths.get("databases" + File.pathSeparator + databaseName);
+            Paths.get("databases" + File.separator + databaseName);
         return Files.exists(databasePath);
     }
     
     public static void delete(String name) throws IOException {
-        String pathName = "databases" + File.pathSeparator + name;
+        String pathName = "databases" + File.separator + name;
         File databaseDirectory = new File(pathName);
-        
+    
         if (databaseDirectory.exists() && databaseDirectory.isDirectory()) {
             for (File table : databaseDirectory.listFiles()) {
                 if (table == null || !table.delete()) {

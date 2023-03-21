@@ -1,13 +1,9 @@
 package edu.uob;
 
-import javax.sound.midi.SysexMessage;
-import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.stream.Stream;
 
 import static java.io.File.separator;
 
@@ -35,7 +31,9 @@ public class Interpreter {
             }
             case UPDATE -> handleUpdate(tree.getRoot().getLastChild());
             case DELETE -> handleDelete(tree.getRoot().getLastChild());
-            case JOIN -> handleJoin(tree.getRoot().getLastChild());
+            case JOIN -> {
+                return handleJoin(tree.getRoot().getLastChild());
+            }
             default -> throw new IOException("[ERROR] - invalid query");
         }
         
@@ -55,68 +53,51 @@ public class Interpreter {
             throw new IOException("[ERROR] - database name of " +
                 node.getLastChild().getValue() + " is invalid");
         } else {
-            String dbName = Paths.get("databases" + separator +
+            String dbName = Paths.get("databases" + File.separator +
                 node.getLastChild().getValue()).toAbsolutePath().toString();
-            database.loadDatabase(Paths.get(dbName));
+            database.loadDatabase(node.getLastChild().getValue());
         }
     }
 
     private void handleCreate(Node node) throws IOException {
         // Invalid queries
-        if (node.getLastChild().getType() != NodeType.DATABASE_NAME &&
-                node.getChild(0).getType() != NodeType.TABLE_NAME) {
-            throw new IOException("[ERROR] = <create> should have one (and " +
-                "only one) argument, which is either a table or database name");
-        } else if (nameIsInvalid(node.getChild(0).getValue())) {
+        if (nameIsInvalid(node.getChild(0).getValue())) {
             throw new IOException("[ERROR] - name of " +
                 node.getChild(0).getValue() + " is invalid");
         }
-        // Create the databse/table (depending on child node type)
-        if (node.getLastChild().getType() == NodeType.DATABASE_NAME) {
+        
+        // if Database name, create a database
+        if (node.getChild(0).getType() == NodeType.DATABASE_NAME) {
             String dbName = Paths.get("databases" + separator +
                 node.getLastChild().getValue()).toAbsolutePath().toString();
             database.createDatabase(Paths.get(dbName));
-        } else {
+        }
+        
+        // If a table name, create a table
+        if (node.getChild(0).getType() == NodeType.TABLE_NAME) {
             // Catch error of creating a table outside of a database
             if (database.getDatabaseName() == "") {
                 throw new IOException("[ERROR] - must be using a database to " +
                     "create a table");
             }
-            if (node.getNumberChildren() == 1) {
-                database.addTable(node.getLastChild().getValue());
-            } else {
+            
+            // If attributes are provided, add them as well
+            String tableName = node.getChild(0).getValue();
+            database.addTable(tableName);
+            if (node.getNumberChildren() == 2) {
                 // Make an array of the values of the children to this
                 // create node, and pass them to the addTable method of
                 // the database
-                ArrayList<Node> children = node.getChildren();
-                String tableName = children.get(0).getValue();
-                ArrayList<String> attributeNames = new ArrayList<>();
-                for (int i = 0; i < children.get(1).getNumberChildren(); i++) {
-                    Node attribute = children.get(1).getChild(i);
-                    if (attribute.getNumberChildren() == 1) {
-                        attributeNames.add(attribute.getLastChild().getValue());
-                    } else if (attribute.getNumberChildren() == 2) {
-                        if (attribute.getChild(0).getValue() != tableName) {
-                            throw new IOException("[ERROR] - cannot " +
-                                "create a table with an attribute " +
-                                "associated with another table");
-                        } else {
-                            attributeNames.add(attribute.getChild(1).getValue());
-                        }
-                    } else {
-                        throw new IOException("[ERROR] - incorrectly " +
-                            "formed [attribute]");
-                    }
+                Node attributesNode = node.getChild(1);
+                for (int i = 0; i < attributesNode.getNumberChildren(); i++) {
+                    database.addAttributeToTable(tableName, attributesNode.getChild(i));
                 }
-                String[] attributeNamesArray = new String[attributeNames.size()];
-                attributeNames.toArray(attributeNamesArray);
-                database.addTable(tableName, attributeNamesArray);
             }
         }
     }
 
     private void handleDrop(Node dropNode) throws IOException {
-        // Catch possible errros in the command
+        // Catch possible errors in the command
         if (dropNode == null || dropNode.getType() != NodeType.DROP || dropNode.getNumberChildren() != 1) {
             throw new IOException("[ERROR] - incorrectly formed DROP command");
         }

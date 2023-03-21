@@ -60,9 +60,11 @@ public class DBServer {
         try {
             String queryOutput = interpreter.interpret(ast);
             System.out.println("SUCCESS!!"); // debugging
+            System.out.println("[OK]\n" + queryOutput);
             return ("[OK]\n" + queryOutput);
         } catch (IOException err) {
-            System.out.println("Could not interpret - " + err.getMessage()); // debugging
+            System.out.println("Could not interpret - " + err); //
+            // debugging
             return err.getMessage();
         }
     }

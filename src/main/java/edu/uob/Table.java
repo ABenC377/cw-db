@@ -18,15 +18,7 @@ public class Table {
         this.rows = new ArrayList<>();
     }
     
-    // For creating a table with a table name and a list of attributes
-    public Table(String tableName,
-                 String[] attributes) throws IOException {
-        this.tableName = tableName;
-        this.attributeNames = new ArrayList<>();
-        attributeNames.add("id");
-        attributeNames.addAll(Arrays.asList(attributes));
-    }
-    
+
     // For populating a database with tables when loading a database from files
     public Table(File inputFile) throws IOException {
         // HANDLE META DATA FILE TO GET PRIMARY KEY VALUE
@@ -157,7 +149,7 @@ public class Table {
         
         // add the values
         for (int i = 0; i < valuesList.getNumberChildren(); i++) {
-            newRow.add(valuesList.getChild(i).getValue());
+            newRow.add(valuesList.getChild(i).getChild(0).getValue());
         }
         
         // Add the row to the db data structure
@@ -351,9 +343,17 @@ public class Table {
     }
     
     public void saveTable(String databasePathName) throws IOException {
+        String tablePath = databasePathName + File.separator + tableName +
+            ".tab";
         File tableFile =
-            new File(databasePathName + File.pathSeparator + tableName);
-        tableFile.createNewFile();
+            new File(tablePath);
+        try {
+            System.out.println(tablePath);
+            tableFile.createNewFile();
+        } catch (IOException err) {
+            throw new IOException("[ERROR] - cannot save table file to the " +
+                "database directory");
+        }
         
         // Bosh in the attribute names
         FileWriter writer = new FileWriter(tableFile);
@@ -362,11 +362,12 @@ public class Table {
             bufferedWriter.write(attribute + "\t");
         }
         bufferedWriter.newLine();
+        System.out.println(rows);
         
         // Bang in the rows
         for (ArrayList<String> row : rows) {
             for (String value : row) {
-                bufferedWriter.write("value" + "\t");
+                bufferedWriter.write(value + "\t");
             }
             bufferedWriter.newLine();
         }
