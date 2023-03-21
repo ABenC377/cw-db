@@ -21,39 +21,39 @@ public class Parser {
         if (tryUse()) {
             current.setType(NodeType.USE);
             current = current.getParent();
-            return true;
+            return substringIsNext(";");
         } else if (tryCreate()) {
             current.setType(NodeType.CREATE);
             current = current.getParent();
-            return true;
+            return substringIsNext(";");
         } else if (tryDrop()) {
             current.setType(NodeType.DROP);
             current = current.getParent();
-            return true;
+            return substringIsNext(";");
         } else if (tryAlter()) {
             current.setType(NodeType.ALTER);
             current = current.getParent();
-            return true;
+            return substringIsNext(";");
         } else if (tryInsert()) {
             current.setType(NodeType.INSERT);
             current = current.getParent();
-            return true;
+            return substringIsNext(";");
         } else if (trySelect()) {
             current.setType(NodeType.SELECT);
             current = current.getParent();
-            return true;
+            return substringIsNext(";");
         } else if (tryUpdate()) {
             current.setType(NodeType.UPDATE);
             current = current.getParent();
-            return true;
+            return substringIsNext(";");
         } else if (tryDelete()) {
             current.setType(NodeType.DELETE);
             current = current.getParent();
-            return true;
+            return substringIsNext(";");
         } else if (tryJoin()) {
             current.setType(NodeType.JOIN);
             current = current.getParent();
-            return true;
+            return substringIsNext(";");
         } else {
             // getting rid of the impossible command type node before returning
             current = current.getParent();
@@ -332,10 +332,10 @@ public class Parser {
 
     // [BooleanLiteral] ::= "TRUE" | "FALSE"
     private boolean tryBooleanLiteral() {
-        if (substringIsNext("TRUE")) {
+        if (substringIsNextCaseInsensitive("TRUE")) {
             current.setValue("TRUE");
             return true;
-        } else if (substringIsNext("FALSE")) {
+        } else if (substringIsNextCaseInsensitive("FALSE")) {
             current.setValue("FALSE");
             return true;
         } else {
@@ -417,7 +417,7 @@ public class Parser {
 
         if (substringIsNext("'")) {
             return true;
-        } else if (isCharLiteral()) {
+        } else if (index < command.length() && isCharLiteral()) {
             tryStringLiteral();
             return true;
         } else {
@@ -486,9 +486,12 @@ public class Parser {
     close parenthesis I'll move up to the parent node.
     When I run out of these groupings, or I'm moved to the parent of the original condition node, I'm done.
 
+    This makes sure that all the layering of conditions is transferred to the
+     AST.  However, it does allow some incorrect groupings to pass.
+     Nonetheless, these are caught by the interpreter
      */
     private boolean tryCondition() {
-
+        int startingIndex = index;
         // Check for the first comparator group (i.e., [AttributeName] [Comparator] [Value])
         int resetIndex = index;
         if (!skipWhiteSpaceAndCheckParentheses()) {
@@ -516,9 +519,14 @@ public class Parser {
             }
             resetIndex = index;
         }
-        index = resetIndex;
-        return true;
-
+        
+        if (skipWhiteSpaceAndCheckParentheses()) {
+            index = resetIndex;
+            return true;
+        } else {
+            index = startingIndex;
+            return false;
+        }
     }
 
     private boolean tryConditionIndividual() {
@@ -788,6 +796,15 @@ public class Parser {
         } else {
             return false;
         }
+    }
+    
+    private boolean substringIsNextCaseInsensitive(String str) {
+        if ((index + str.length() >= command.length()) ||
+            !command.substring(index, index + str.length()).equalsIgnoreCase(str)) {
+            return false;
+        }
+        index += str.length();
+        return true;
     }
 
     private boolean checkForStrings(int resetIndex,

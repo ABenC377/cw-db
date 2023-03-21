@@ -1,6 +1,7 @@
 package edu.uob;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -38,5 +39,10 @@ public class SelectQueryTests {
         // Try to send a command to the server - this call will timeout if it takes too long (in case the server enters an infinite loop)
         return assertTimeoutPreemptively(Duration.ofMillis(1000), () -> { return server.handleCommand(command);},
             "Server took too long to respond (probably stuck in an infinite loop)");
+    }
+    
+    @Test
+    public void testNestedConditions() {
+        assert(sendCommandToServer("SELECT mark FROM marks WHERE ();").contains("[ERROR]"));
     }
 }

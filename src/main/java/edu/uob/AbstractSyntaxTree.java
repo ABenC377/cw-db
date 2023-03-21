@@ -15,6 +15,7 @@ public class AbstractSyntaxTree {
         } catch (IOException err) {
             throw new IOException(err.getMessage());
         }
+        
     }
 
     private void parseCommand() throws IOException {

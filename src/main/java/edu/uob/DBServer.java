@@ -54,7 +54,6 @@ public class DBServer {
         AbstractSyntaxTree ast = null;
         try {
             ast = new AbstractSyntaxTree(command);
-            // System.out.println(ast); // debugging
         } catch (IOException err) {
             return err.getMessage();
         }
@@ -74,18 +73,23 @@ public class DBServer {
         }
     }
     
-    public void printDatabases() throws IOException {
+    @Override
+    public String toString() {
         Database database = new Database();
         File databaseDirectory =
             new File(Paths.get("databases").toAbsolutePath().toString());
         if (!databaseDirectory.exists()) {
-            System.out.println("No databases");
+            return "No databases";
         }
         
+        StringBuilder output = new StringBuilder();
         for (File db : Objects.requireNonNull(databaseDirectory.listFiles())) {
-            database.loadDatabase(db.getName());
-            System.out.println(database);
+            try {
+                database.loadDatabase(db.getName());
+            } catch (IOException err) { }
+            output.append(database);
         }
+        return output.toString();
     }
 
 

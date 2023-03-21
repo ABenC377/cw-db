@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.time.Duration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 public class InterpretterTests {
@@ -42,6 +43,13 @@ public class InterpretterTests {
             "'willow');");
         sendCommandToServer("INSERT INTO marks VALUES ('Clive', 20, FALSE, " +
             "40);");
-        server.printDatabases();
+        assertEquals("""
+            [OK]
+            id\tname\tmark\tpass\tworrisomedata\t
+            1\tSteve\t65\tTRUE\t17.4\t
+            2\tDave\t55\tTRUE\tFALSE\t
+            3\tBob\t35\tFALSE\twillow\t
+            4\tClive\t20\tFALSE\t40\t
+            """, sendCommandToServer("SELECT * FROM marks;"));
     }
 }

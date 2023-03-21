@@ -103,7 +103,8 @@ public class ParserValidQueryTests {
     }
     @Test
     public void testSelectWhere() throws IOException {
-        AbstractSyntaxTree ast = new AbstractSyntaxTree("SELECT * FROM table WHERE (country LIKE 'rance');");
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("SELECT * FROM table " +
+            "WHERE (country LIKE 'rance');");
         assertEquals("<command>\n" +
                 "└── <select>\n" +
                 "    ├── <wild attribute list>(value = *)\n" +
@@ -121,7 +122,8 @@ public class ParserValidQueryTests {
 
     @Test
     public void testUpdate() throws IOException {
-        AbstractSyntaxTree ast = new AbstractSyntaxTree("UPDATE fancyTableName  SET fancyTableName.income = NULL WHERE (age > 2 OR (country LIKE 'rance' AND name == 'james'));");
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("UPDATE " +
+            "fancyTableName  SET fancyTableName.income = NULL WHERE (age > 2 OR (country LIKE 'rance' AND name == 'james'));");
         assertEquals("<command>\n" +
                 "└── <update>\n" +
                 "    ├── [table name](value = fancyTableName)\n" +
