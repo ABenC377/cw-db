@@ -26,7 +26,6 @@ public class Database {
     public void loadDatabase(String name) throws IOException {
         String databasePath = Paths.get("databases" + File.separator +
             name).toAbsolutePath().toString();
-        System.out.println(databasePath); // debugging
         File databaseDirectory = new File(databasePath);
         if (databaseDirectory.exists()) {
             databaseName = name;

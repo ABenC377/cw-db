@@ -21,7 +21,7 @@ public class Table {
 
     // For populating a database with tables when loading a database from files
     public Table(File inputFile) throws IOException {
-        // HANDLE META DATA FILE TO GET PRIMARY KEY VALUE
+        // todo - HANDLE META DATA FILE TO GET PRIMARY KEY VALUE
         
         
         // Open the file
@@ -51,7 +51,8 @@ public class Table {
         }
         
         // Get the name of the file
-        this.tableName = inputFile.getName();
+        this.tableName = inputFile.getName().substring(0,
+            inputFile.getName().indexOf('.'));
 
         // Close things up like a responsible programmer
         try {
@@ -146,8 +147,6 @@ public class Table {
         
         // Add the row to the db data structure
         rows.add(newRow);
-        System.out.println(attributeNames); // debugging
-        System.out.println(rows); // debugging
     }
     
     public String selectValues(ArrayList<String> selectAttributes) throws IOException {
@@ -190,7 +189,6 @@ public class Table {
             }
             output.append(System.lineSeparator());
         }
-        System.out.println(output); // debugging
         return output.toString();
     }
     
@@ -411,6 +409,24 @@ public class Table {
         // Close things off
         bufferedWriter.flush();
         bufferedWriter.close();
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        for (String attribute : attributeNames) {
+            builder.append(attribute);
+            builder.append("\t");
+        }
+        builder.append(System.lineSeparator());
+        for (ArrayList<String> row : rows) {
+            for (String value : row) {
+                builder.append(value);
+                builder.append("\t");
+            }
+            builder.append(System.lineSeparator());
+        }
+        return builder.toString();
     }
 }
 
