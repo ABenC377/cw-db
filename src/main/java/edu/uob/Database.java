@@ -70,7 +70,7 @@ public class Database {
         }
     }
     
-    public void addTable(String tableName) throws IOException {
+    public void addTable(String tableName) {
         tables.add(new Table(tableName));
     }
     
