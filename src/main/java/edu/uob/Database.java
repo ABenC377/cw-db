@@ -24,8 +24,10 @@ public class Database {
     }
     
     public void loadDatabase(String name) throws IOException {
-        String path = "databases" + File.separator + name;
-        File databaseDirectory = new File(path);
+        String databasePath = Paths.get("databases" + File.separator +
+            name).toAbsolutePath().toString();
+        System.out.println(databasePath); // debugging
+        File databaseDirectory = new File(databasePath);
         if (databaseDirectory.exists()) {
             databaseName = name;
             tables.clear();
@@ -36,12 +38,18 @@ public class Database {
                 } else {
                     if (!table.getName().equals("meta")) {
                         addTable(table);
+                    } else {
+                        if (metadata == null) {
+                            metadata = new Metadata(databasePath);
+                        } else {
+                            metadata.loadFromFile(table);
+                        }
                     }
                 }
             }
         } else {
             throw new IOException("[ERROR] - cannot open database at " +
-                path + " as one does not exist");
+                databasePath + " as one does not exist");
         }
     }
     
@@ -59,7 +67,7 @@ public class Database {
             }
             
             // Create the metadata file in the directory
-            metadata = new Metadata(path);
+            metadata = new Metadata(path.toString());
         }
     }
     

@@ -10,14 +10,14 @@ public class Metadata {
     ArrayList<String> tableNames;
     ArrayList<Integer> ids;
     
-    public Metadata(Path databasePath) throws IOException {
-        metadataFile = new File(databasePath.toString() + File.separator +
+    public Metadata(String databasePath) throws IOException {
+        metadataFile = new File(databasePath + File.separator +
                 "meta");
         tableNames = new ArrayList<>();
         ids = new ArrayList<>();
 
         if (metadataFile.exists()) {
-            loadFromFile();
+            loadFromFile(metadataFile);
         } else if (!metadataFile.createNewFile()) {
             throw new IOException("[ERROR] - unable to create metadata file " +
                 "in " + databasePath);
@@ -25,23 +25,16 @@ public class Metadata {
     }
     
     
-    private void loadFromFile() throws IOException {
-        FileReader reader = new FileReader(metadataFile);
+    public void loadFromFile(File file) throws IOException {
+        metadataFile = file;
+        FileReader reader = new FileReader(file);
         BufferedReader bufferedReader = new BufferedReader(reader);
-        boolean repeat = true;
-        while (repeat) {
-            String currentLine = null;
-            try {
-                currentLine = bufferedReader.readLine();
-            } catch (IOException err) {
-                repeat = false;
-            }
-            if (repeat) {
-                ArrayList<String> table =
-                    new ArrayList<>(Arrays.asList(currentLine.split(",")));
-                tableNames.add(table.get(0));
-                ids.add(Integer.valueOf(table.get(1)));
-            }
+        String current;
+        while ((current = bufferedReader.readLine()) != null) {
+            ArrayList<String> table =
+                new ArrayList<>(Arrays.asList(current.split(",")));
+            tableNames.add(table.get(0));
+            ids.add(Integer.valueOf(table.get(1)));
         }
         bufferedReader.close();
     }

@@ -53,8 +53,6 @@ public class Interpreter {
             throw new IOException("[ERROR] - database name of " +
                 node.getLastChild().getValue() + " is invalid");
         } else {
-            String dbName = Paths.get("databases" + File.separator +
-                node.getLastChild().getValue()).toAbsolutePath().toString();
             database.loadDatabase(node.getLastChild().getValue());
         }
     }

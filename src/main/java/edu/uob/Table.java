@@ -46,13 +46,7 @@ public class Table {
         // Populate the rows while buffer reader still pumping out lines
         String current = null;
         rows = new ArrayList<>();
-        boolean repeat = true;
-        while (repeat) {
-            try {
-                current = bReader.readLine();
-            } catch (IOException err) {
-                repeat = false;
-            }
+        while ((current = bReader.readLine()) != null) {
             rows.add(new ArrayList<>(Arrays.asList(current.split("\t"))));
         }
         
@@ -152,6 +146,8 @@ public class Table {
         
         // Add the row to the db data structure
         rows.add(newRow);
+        System.out.println(attributeNames); // debugging
+        System.out.println(rows); // debugging
     }
     
     public String selectValues(ArrayList<String> selectAttributes) throws IOException {
@@ -179,7 +175,7 @@ public class Table {
     }
     
     public String selectValues() throws IOException {
-    
+        
         StringBuilder output = new StringBuilder();
         for (String attributeName : attributeNames) {
             output.append(attributeName);
@@ -194,7 +190,7 @@ public class Table {
             }
             output.append(System.lineSeparator());
         }
-    
+        System.out.println(output); // debugging
         return output.toString();
     }
     
