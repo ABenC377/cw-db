@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AlteringTableTests {
     DBServer server;
@@ -166,5 +165,10 @@ public class AlteringTableTests {
             "3\tC\tNeill\t115\tTRUE\t\n" +
             "4\tOverview of SWE\tRuzana\t90\tFALSE\t\n", sendCommandToServer("SELECT" +
             " * FROM courses;"));
+    }
+    
+    @Test
+    public void testChangingTable_9() {
+        assertTrue(sendCommandToServer("ALTER TABLE courses DROP id;").contains("[ERROR]"));
     }
 }
