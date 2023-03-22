@@ -132,10 +132,10 @@ public class Interpreter {
         
         Node typeNode = alterNode.getChild(1);
         Node attributeNode = alterNode.getChild(2);
-        if (typeNode.getValue().equals("ADD")) {
+        if (typeNode.getValue().equalsIgnoreCase("ADD")) {
             database.addAttributeToTable(tableNode.getValue(),
                 attributeNode);
-        } else if (typeNode.getValue().equals("DROP")) {
+        } else if (typeNode.getValue().equalsIgnoreCase("DROP")) {
             database.dropAttributeFromTable(tableNode.getValue(),
                 attributeNode);
         } else {

@@ -78,7 +78,7 @@ public class Table {
         
         attributeNames.add(attributeNode.getLastChild().getValue());
         for (ArrayList<String> row : rows) {
-            row.add("");
+            row.add("NULL");
         }
     }
     

@@ -112,4 +112,17 @@ public class SelectQueryTests {
             "Steve\t\n", sendCommandToServer("SELECT name FROM marks WHERE " +
             "(WorrisOMEdaTa < 30);"));
     }
+    
+    @Test
+    public void testValidNestedConditions_9() {
+        assertTrue(sendCommandToServer("SELECT mark, name FROM marks WHERE " +
+            "(WorrisOMEdaTa < 30);").contains("[OK]"));
+    }
+    @Test
+    public void testValidNestedConditions_10() {
+        assertEquals("[OK]\n" +
+            "mark\tname\t\n" +
+            "65\tSteve\t\n", sendCommandToServer("SELECT mark, name FROM marks " +
+            "WHERE (WorrisOMEdaTa < 30);"));
+    }
 }

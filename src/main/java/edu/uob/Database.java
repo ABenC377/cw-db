@@ -99,7 +99,7 @@ public class Database {
     
     public boolean tableExists(String tableName) {
         for (Table table : tables) {
-            if (table.getName().equals(tableName)) {
+            if (table.getName().equalsIgnoreCase(tableName)) {
                 return true;
             }
         }
@@ -129,7 +129,8 @@ public class Database {
     
     private Table getTable(String tableName) throws IOException {
         for (Table table : tables) {
-            if (Objects.equals(table.getName(), tableName)) {
+            if (table.getName() != null &&
+                table.getName().equalsIgnoreCase(tableName)) {
                 return table;
             }
         }
