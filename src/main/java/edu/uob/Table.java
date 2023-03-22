@@ -108,6 +108,9 @@ public class Table {
         if (attributeIndex == -1) {
             throw new IOException("[ERROR] - the attribute being dropped is " +
                 "not present in this table");
+        } else if (attributeIndex == 0) {
+            throw new IOException("[ERROR] - cannot drop the primary key of " +
+                "this table (id)");
         }
         
         // Now actually remove the attribute
