@@ -36,6 +36,7 @@ public class Metadata {
             ids.add(Integer.valueOf(table.get(1)));
         }
         bufferedReader.close();
+        reader.close();
     }
     
     public void saveMetaData(ArrayList<Table> tables) throws IOException {
