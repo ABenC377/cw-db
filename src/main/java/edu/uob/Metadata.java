@@ -81,6 +81,7 @@ public class Metadata {
             ArrayList<String> tables =
                 new ArrayList<>(Arrays.asList(currentLine.split(",")));
             if (tables.get(0).equalsIgnoreCase(tableName)) {
+                bufferedReader.close();
                 return Integer.parseInt(tables.get(1));
             }
         }
@@ -140,6 +141,7 @@ public class Metadata {
             }
         }
         bufferedReader.close();
+        reader.close();
     
         // rewrite it with table line removed
         FileWriter writer = new FileWriter(metadataFile);
