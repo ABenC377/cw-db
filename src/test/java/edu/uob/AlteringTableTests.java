@@ -47,7 +47,8 @@ public class AlteringTableTests {
     
     private String sendCommandToServer(String command) {
         // Try to send a command to the server - this call will timeout if it takes too long (in case the server enters an infinite loop)
-        return assertTimeoutPreemptively(Duration.ofMillis(1000), () -> { return server.handleCommand(command);},
+        return assertTimeoutPreemptively(Duration.ofMillis(1000),
+            () -> { return server.handleCommand(command);},
             "Server took too long to respond (probably stuck in an infinite loop)");
     }
     
@@ -169,11 +170,24 @@ public class AlteringTableTests {
     
     @Test
     public void testChangingTable_9() {
-        assertTrue(sendCommandToServer("ALTER TABLE courses DROP id;").contains("[ERROR]"));
+        assertEquals("[OK]\n", sendCommandToServer(
+            "UPDATE courses SET difficult = FALSE, students=130 WHERE teacher == 'Neill';"));
+        assertEquals("[OK]\n" +
+            "id\tname\tteacher\tstudents\tdifficult\t\n" +
+            "1\tCompArch\tAnas\t120\tTRUE\t\n" +
+            "2\tJava\tSimon\t100\tFALSE\t\n" +
+            "3\tC\tNeill\t130\tFALSE\t\n" +
+            "4\tOverview of SWE\tRuzana\t90\tFALSE\t\n", sendCommandToServer("SELECT" +
+            " * FROM courses;"));
     }
     
     @Test
     public void testChangingTable_10() {
+        assertTrue(sendCommandToServer("ALTER TABLE courses DROP id;").contains("[ERROR]"));
+    }
+    
+    @Test
+    public void testChangingTable_11() {
         assertTrue(sendCommandToServer("ALTER TABLE courses DROP diffICULT;").contains("[OK]"));
         assertEquals("[OK]\n" +
             "id\tname\tteacher\tstudents\t\n" +

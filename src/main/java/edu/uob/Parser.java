@@ -124,6 +124,7 @@ public class Parser {
         while (substringIsNext(",")) {
             skipWhiteSpace();
             if (!checkForGrammar(NodeType.ATTRIBUTE_NAME, this::tryAttributeName, resetIndex, true)) {
+                index = resetIndex;
                 return true;
             }
             resetIndex = index;
@@ -143,7 +144,6 @@ public class Parser {
         if (!checkForGrammar(NodeType.PLAIN_TEXT, this::tryPlainText, resetIndex, true)) {
             return false;
         }
-
         // If there is a full stop and another plain text we need to change the type of teh first child
         // Otherwise, we just return the current 1-child AttributeName node (hence the false passed into the
         // completeReset parameter in checkForGrammar() below)
@@ -178,12 +178,10 @@ public class Parser {
             return true;
         }
         
-        
         skipWhiteSpace();
         if (!checkForGrammar(NodeType.ATTRIBUTE_LIST, this::tryAttributeList, resetIndex, false)) {
             return true;
         }
-        
         
         skipWhiteSpace();
         if (!substringIsNext(")")) {
@@ -646,8 +644,10 @@ public class Parser {
         // Check for optional additional NameValuePairs
         resetIndex = index;
         while (substringIsNext(",")) {
+            skipWhiteSpace();
             if (checkForGrammar(NodeType.NAME_VALUE_PAIR, this::tryNameValuePair, resetIndex, false)) {
-                index = resetIndex;
+                resetIndex = index;
+                skipWhiteSpace();
             }
         }
         return true;
@@ -660,7 +660,8 @@ public class Parser {
         if (!checkForGrammar(NodeType.ATTRIBUTE_NAME, this::tryAttributeName, resetIndex, true)) {
             return false;
         }
-
+        
+        skipWhiteSpace();
         if (!checkForStrings(resetIndex, true, false, "=")) {
             return false;
         }
