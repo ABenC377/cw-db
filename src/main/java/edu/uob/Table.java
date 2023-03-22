@@ -8,7 +8,7 @@ public class Table {
     private final String tableName;
     private final ArrayList<String> attributeNames;
     private final ArrayList<ArrayList<String>> rows;
-    private int primaryKeyValue = 1;
+    private int primaryKeyValue = -1;
 
     // For creating a table with just a table name
     public Table(String name) {
@@ -16,14 +16,12 @@ public class Table {
         this.attributeNames = new ArrayList<>();
         attributeNames.add("id");
         this.rows = new ArrayList<>();
+        primaryKeyValue = 1;
     }
     
 
     // For populating a database with tables when loading a database from files
     public Table(File inputFile) throws IOException {
-        // todo - HANDLE META DATA FILE TO GET PRIMARY KEY VALUE
-        
-        
         // Open the file
         FileReader reader;
         try {
@@ -56,13 +54,25 @@ public class Table {
 
         // Close things up like a responsible programmer
         bReader.close();
+        
+        // Get the primary key value from the metadata
+        if (primaryKeyValue == -1) {
+            try {
+                Metadata meta = new Metadata(inputFile.getParentFile()
+                    .getAbsolutePath());
+                primaryKeyValue = meta.getPrimaryKey(tableName);
+            } catch (IOException err) {
+                throw new IOException("Unable to load metadata");
+            }
+        }
     }
     
     public void addAttribute(Node attributeNode) throws IOException {
+        // Check that what has been passed is actually an attribute
         if (attributeNode.getType() != NodeType.ATTRIBUTE_NAME) {
             throw new IOException("[ERROR] - invalid attribute name");
         }
-        
+        // Check for wierd other-table attributes
         if (attributeNode.getChild(0).getType() == NodeType.TABLE_NAME) {
             if (!attributeNode.getChild(0).getValue().equals(tableName)) {
                 throw new IOException("[ERROR] - attribute's table name must " +
@@ -70,12 +80,14 @@ public class Table {
                     "added to");
             }
         }
-        
+        // Make sure that the attribute doesn't already exist in table
         if (findIndexOfAttribute(attributeNode.getLastChild().getValue()) != -1) {
             throw new IOException("[ERROR] - Cannot add attribute to table, " +
                 "as attribute is already present in this table");
         }
         
+        // Finally, if all the above is okay, add the attribute, and give the
+        // pre-existing rows a value of NULL for it
         attributeNames.add(attributeNode.getLastChild().getValue());
         for (ArrayList<String> row : rows) {
             row.add("NULL");
@@ -87,7 +99,6 @@ public class Table {
         if (attributeNode.getType() != NodeType.ATTRIBUTE_NAME) {
             throw new IOException("[ERROR] - invalid attribute name");
         }
-    
         // Check it doesn't relate to a different table
         if ((attributeNode.getChild(0).getType() == NodeType.TABLE_NAME) &&
             (!attributeNode.getChild(0).getValue().equals(tableName))) {
@@ -95,7 +106,6 @@ public class Table {
                 "be the same as the name of the table that it is being " +
                 "added to");
         }
-        
         // Check attribute exists in this table
         String attributeName = attributeNode.getLastChild().getValue();
         int attributeIndex = findIndexOfAttribute(attributeName);
@@ -121,6 +131,7 @@ public class Table {
                 return i;
             }
         }
+        // -1 is the failure return value (i.e., attribute does not exist)
         return -1;
     }
     
@@ -279,7 +290,7 @@ public class Table {
                                   argType == DataType.BOOLEAN ||
                                   valType == DataType.NULL) ?
             argument.compareTo(value) :
-            Float.valueOf(argument) - Float.valueOf(value);
+            Float.parseFloat(argument) - Float.parseFloat(value);
         
         // Now a simple switch statement on the basis of the value of the
         // comparator node
@@ -338,7 +349,7 @@ public class Table {
     
     public void updateTable(Node listNode,
                             Node conditionNode) throws IOException {
-        // Set up array lists of attribute indices and values so we can
+        // Set up array lists of attribute indices and values, so we can
         // easily iterate over them later on
         ArrayList<Integer> attributeIndexes = new ArrayList<>();
         ArrayList<String> values = new ArrayList<>();
@@ -427,6 +438,10 @@ public class Table {
         // Close things off
         bufferedWriter.flush();
         bufferedWriter.close();
+    }
+    
+    public int getPrimaryKeyValue() {
+        return primaryKeyValue;
     }
     
     @Override

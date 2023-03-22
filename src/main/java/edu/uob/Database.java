@@ -283,7 +283,7 @@ public class Database {
             for (Table table : tables) {
                 table.saveTable(pathName);
             }
-            metadata.saveMetaData();
+            metadata.saveMetaData(tables);
         }
     }
     

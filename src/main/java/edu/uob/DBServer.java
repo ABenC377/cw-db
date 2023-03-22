@@ -1,6 +1,5 @@
 package edu.uob;
 
-import javax.xml.crypto.Data;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -11,16 +10,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Paths;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
 /** This class implements the DB server. */
 public class DBServer {
 
     private static final char END_OF_TRANSMISSION = 4;
-    private String storageFolderPath;
-    private Interpreter interpreter;
+    private final String storageFolderPath;
+    private final Interpreter interpreter;
 
     public static void main(String[] args) throws IOException {
         DBServer server = new DBServer();
@@ -49,9 +46,9 @@ public class DBServer {
     *
     * <p>This method handles all incoming DB commands and carries out the required actions.
     */
-    public String handleCommand(String command) throws IOException {
+    public String handleCommand(String command) {
         // Handle the query commands from the input String onto the temporary instance of the DB
-        AbstractSyntaxTree ast = null;
+        AbstractSyntaxTree ast;
         try {
             ast = new AbstractSyntaxTree(command);
         } catch (IOException err) {
@@ -68,7 +65,7 @@ public class DBServer {
 
     public void dropAll() throws IOException {
         File databasesDirectory = new File(Paths.get("databases").toAbsolutePath().toString());
-        for (File database : databasesDirectory.listFiles()) {
+        for (File database : Objects.requireNonNull(databasesDirectory.listFiles())) {
             Database.delete(database.getName());
         }
     }

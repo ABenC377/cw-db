@@ -71,7 +71,7 @@ public class Interpreter {
         
         // If a table name, create a table
         if (node.getChild(0).getType() == NodeType.TABLE_NAME) {
-            // Catch error of creating a table outside of a database
+            // Catch error of creating a table outside a database
             if (database.getDatabaseName().equals("")) {
                 throw new IOException("[ERROR] - must be using a database to " +
                     "create a table");
@@ -197,7 +197,7 @@ public class Interpreter {
         return (name.equalsIgnoreCase("USE") ||
             name.equalsIgnoreCase("CREATE") ||
             name.equalsIgnoreCase("DROP") ||
-            name.equalsIgnoreCase("DATABSE") ||
+            name.equalsIgnoreCase("DATABASE") ||
             name.equalsIgnoreCase("TABlE") ||
             name.equalsIgnoreCase("ALTER") ||
             name.equalsIgnoreCase("INSERT") ||

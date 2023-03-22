@@ -53,8 +53,8 @@ public class AbstractSyntaxTree {
         buffer.append('\n');
         
         // Iterate through the children and add them to the buffer as well
-        // Change the prefix for the children nodes depending on whether or
-        // not they are the final child
+        // Change the prefix for the children nodes depending on whether they
+        // are the final child
         for (Iterator<Node> childIterator =
              currentNode.getChildren().iterator(); childIterator.hasNext();) {
             Node next = childIterator.next();

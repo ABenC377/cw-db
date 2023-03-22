@@ -296,7 +296,7 @@ public class Parser {
             return false;
         }
         
-        // Then do a while loop to check for additional values
+        // Then use WHILE loop to check for additional values
         // -- careful to only reset the most resent child on a failure
         resetIndex = index;
         skipWhiteSpace();
@@ -770,9 +770,9 @@ public class Parser {
         }
     }
 
-    // This method is a helper for the tryCondition() method.  It handels moving up and down the
-    // syntax tree according to parentheses.  It has a boolean return value to tell the caller function
-    // when to bail
+    // This method is a helper for the tryCondition() method.  It handles
+    // moving up and down the syntax tree according to parentheses.  It has a
+    // boolean return value to tell the caller function when to bail
     private boolean skipWhiteSpaceAndCheckParentheses() {
         char c = command.charAt(index);
         while (index < command.length() &&

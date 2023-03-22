@@ -1,7 +1,6 @@
 package edu.uob;
 
 import java.io.*;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -39,11 +38,12 @@ public class Metadata {
         bufferedReader.close();
     }
     
-    public void saveMetaData() throws IOException {
+    public void saveMetaData(ArrayList<Table> tables) throws IOException {
         FileWriter writer = new FileWriter(metadataFile);
         BufferedWriter bufferedWriter = new BufferedWriter(writer);
-        for (int i = 0; i < tableNames.size(); i++) {
-            bufferedWriter.write(tableNames.get(i) + "," + ids.get(i));
+        for (Table table : tables) {
+            bufferedWriter.write(table.getName() + "," +
+                table.getPrimaryKeyValue());
             bufferedWriter.newLine();
         }
         bufferedWriter.flush();
@@ -74,23 +74,14 @@ public class Metadata {
         FileReader reader = new FileReader(metadataFile);
         BufferedReader bufferedReader = new BufferedReader(reader);
         
-        String currentLine = null;
-        boolean repeat = true;
-        while (repeat) {
-            try {
-                currentLine = bufferedReader.readLine();
-            } catch (IOException err) {
-                repeat = false;
-            }
-            if (repeat) {
-                ArrayList<String> tables =
-                    new ArrayList<>(Arrays.asList(currentLine.split(",")));
-                if (tables.get(0).equalsIgnoreCase(tableName)) {
-                    return Integer.parseInt(tables.get(1));
-                }
+        String currentLine;
+        while ((currentLine = bufferedReader.readLine()) != null) {
+            ArrayList<String> tables =
+                new ArrayList<>(Arrays.asList(currentLine.split(",")));
+            if (tables.get(0).equalsIgnoreCase(tableName)) {
+                return Integer.parseInt(tables.get(1));
             }
         }
-        
         throw new IOException("[ERROR] - can't find table in metadata file");
     }
     
