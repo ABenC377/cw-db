@@ -366,7 +366,8 @@ public class Table {
             // Populate the array lists
             attributeIndexes.add(findIndexOfAttribute(listNode.getChild(i)
                 .getChild(0).getLastChild().getValue()));
-            values.add(listNode.getChild(i).getChild(1).getValue());
+            values.add(listNode.getChild(i).getChild(1)
+                .getLastChild().getValue());
         }
         
         // Make the changes to each row if the row passes the condition

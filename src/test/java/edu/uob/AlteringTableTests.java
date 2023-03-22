@@ -148,4 +148,23 @@ public class AlteringTableTests {
             "5\tGus\t80\tTRUE\t5.22\tother\t\n", sendCommandToServer("SELECT" +
             " * FROM marks;"));
     }
+    
+    @Test
+    public void testChangingTable_7() {
+        assertEquals("[OK]\n", sendCommandToServer(
+            "UPDATE courses SET difficult=TRUE WHERE teacher LIKE 'Simon';"));
+    }
+    
+    @Test
+    public void testChangingTable_8() {
+        assertEquals("[OK]\n", sendCommandToServer(
+                "UPDATE courses SET difficult=TRUE WHERE teacher LIKE 'Simon';"));
+        assertEquals("[OK]\n" +
+            "id\tname\tteacher\tstudents\tdifficult\t\n" +
+            "1\tCompArch\tAnas\t120\tTRUE\t\n" +
+            "2\tJava\tSimon\t100\tTRUE\t\n" +
+            "3\tC\tNeill\t115\tTRUE\t\n" +
+            "4\tOverview of SWE\tRuzana\t90\tFALSE\t\n", sendCommandToServer("SELECT" +
+            " * FROM courses;"));
+    }
 }
