@@ -196,4 +196,11 @@ public class AlteringTableTests {
             "3\tC\tNeill\t115\t\n" +
             "4\tOverview of SWE\tRuzana\t90\t\n", sendCommandToServer("SELECT * FROM courSES;"));
     }
+    
+    @Test
+    public void testJoinWithEmptyOutput() {
+        assertEquals("[OK]\n" +
+            "id\tmarks.mark\tmarks.pass\tmarks.worrisomedata\tcourses.name\tcourses.students\tcourses.difficult\n", sendCommandToServer("JOIN marks AND courses ON " +
+            "name AND teacher;"));
+    }
 }
