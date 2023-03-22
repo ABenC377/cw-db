@@ -122,6 +122,5 @@ public class DBServer {
                 writer.flush();
             }
         }
-        reader.close();
     }
 }
