@@ -23,12 +23,7 @@ public class Table {
     // For populating a database with tables when loading a database from files
     public Table(File inputFile) throws IOException {
         // Open the file
-        FileReader reader;
-        try {
-            reader = new FileReader(inputFile);
-        } catch (FileNotFoundException e) {
-            throw new IOException("[ERROR] - could not open " + inputFile.getName());
-        }
+        FileReader reader = new FileReader(inputFile);
 
         BufferedReader bReader = new BufferedReader(reader);
         String firstRow = bReader.readLine();
@@ -54,6 +49,7 @@ public class Table {
 
         // Close things up like a responsible programmer
         bReader.close();
+        reader.close();
         
         // Get the primary key value from the metadata
         if (primaryKeyValue == -1) {
