@@ -70,12 +70,22 @@ public class Database {
         }
     }
     
-    public void addTable(String tableName) {
-        tables.add(new Table(tableName));
+    public void addTable(String tableName) throws IOException {
+        if (!tableExists(tableName)) {
+            tables.add(new Table(tableName));
+        } else {
+            throw new IOException("[ERROR] - cannot add this table, as one " +
+                "with this name already exists");
+        }
     }
     
     private void addTable(File table) throws IOException {
-        tables.add(new Table(table));
+        if (!tableExists(table.getName())) {
+            tables.add(new Table(table));
+        } else {
+            throw new IOException("[ERROR] - cannot add this table, as one " +
+                "with this name already exists");
+        }
     }
     
     public String getDatabaseName() {
