@@ -205,7 +205,7 @@ public class Database {
         outputTable.append("id");
         for (String attribute : tableOne.getAttributes()) {
             if (!attribute.equals("id") && !attribute.equals(attributeOne)) {
-                outputTable.append("\t|\t");
+                outputTable.append("\t");
                 outputTable.append(tableOne.getName());
                 outputTable.append(".");
                 outputTable.append(attribute);
@@ -213,7 +213,7 @@ public class Database {
         }
         for (String attribute : tableTwo.getAttributes()) {
             if (!attribute.equals("id") && !attribute.equals(attributeTwo)) {
-                outputTable.append("\t|\t");
+                outputTable.append("\t");
                 outputTable.append(tableTwo.getName());
                 outputTable.append(".");
                 outputTable.append(attribute);
@@ -249,13 +249,13 @@ public class Database {
         row.append(id);
         for (int i = 1; i < rowOne.size(); i++) {
             if (i != indexOne) {
-                row.append("\t|\t");
+                row.append("\t");
                 row.append(rowOne.get(i));
             }
         }
         for (int i = 1; i < rowTwo.size(); i++) {
             if (i != indexTwo) {
-                row.append("\t|\t");
+                row.append("\t");
                 row.append(rowTwo.get(i));
             }
         }
