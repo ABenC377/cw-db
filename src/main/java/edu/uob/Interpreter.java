@@ -132,6 +132,10 @@ public class Interpreter {
         
         Node typeNode = alterNode.getChild(1);
         Node attributeNode = alterNode.getChild(2);
+        if (nameIsInvalid(attributeNode.getChild(0).getValue())) {
+            throw new IOException("[ERROR] - cannot make an attribute with a " +
+                "name that is a reserved word in this query language");
+        }
         if (typeNode.getValue().equalsIgnoreCase("ADD")) {
             database.addAttributeToTable(tableNode.getValue(),
                 attributeNode);

@@ -74,4 +74,22 @@ public class InvalidQueryTests {
     public void testCreatingExistingTable() {
         assertTrue(sendCommandToServer("CREATE TABLE MArks;").contains("[ERROR]"));
     }
+    
+    @Test
+    public void testCreatingAttributeWithReservedName() {
+        assertTrue(sendCommandToServer("ALTER TABLE marks ADD delete;").contains(
+            "[ERROR]"));
+    }
+    
+    @Test
+    public void testCreatingTableWithReservedName() {
+        assertTrue(sendCommandToServer("CREATE TABLE alTEr;").contains(
+            "[ERROR]"));
+    }
+    
+    @Test
+    public void testCreatingDatabaseWithReservedName() {
+        assertTrue(sendCommandToServer("CREATE DATABASE falSE;").contains(
+            "[ERROR]"));
+    }
 }
