@@ -49,6 +49,7 @@ public class Metadata {
         }
         bufferedWriter.flush();
         bufferedWriter.close();
+        writer.close();
     }
     
     public void updatePrimaryKey(String tableName, int newPrimaryKey) throws IOException {
