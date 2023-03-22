@@ -325,11 +325,8 @@ public class Database {
             }
         }
         
-        if (databaseDirectory.exists()) {
-            System.out.println("Directory exists");
-            if (!databaseDirectory.delete()) {
-                throw new IOException("[ERROR] - unable to delete database " + name);
-            }
+        if (databaseDirectory.exists() && !databaseDirectory.delete()) {
+            throw new IOException("[ERROR] - unable to delete database " + name);
         }
     }
 }
