@@ -199,7 +199,7 @@ public class Database {
     private String getJoin(Table tableOne,
                            Table tableTwo,
                            String attributeOne,
-                           String attributeTwo) {
+                           String attributeTwo) throws IOException {
         StringBuilder outputTable = new StringBuilder();
         // Make the attribute column
         outputTable.append("id");
@@ -225,6 +225,10 @@ public class Database {
         int joinID = 1;
         int attributeOneIndex = tableOne.findIndexOfAttribute(attributeOne);
         int attributeTwoIndex = tableTwo.findIndexOfAttribute(attributeTwo);
+        if (attributeOneIndex == -1 || attributeTwoIndex == -1) {
+            throw new IOException("[ERROR] - attribute name not found in this" +
+                " table");
+        }
         for (ArrayList<String> rowOne : tableOne.getRows()) {
             String joinValueOne = rowOne.get(attributeOneIndex);
             for (ArrayList<String> rowTwo : tableTwo.getRows()) {

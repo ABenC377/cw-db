@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JoinTests {
     DBServer server;
@@ -53,9 +53,35 @@ public class JoinTests {
     
     @Test
     public void joinTest_1() {
-        System.out.println("_____________TESTING JOIN____________");
-        System.out.println(sendCommandToServer("JOIN marks AND courses ON " +
+        assertEquals("[OK]\n" +
+            "id\tmarks.name\tmarks.mark\tmarks.worrisomedata\tcourses.name\tcourses.teacher\tcourses.students\n" +
+            "1\tSteve\t65\t17.4\tCompArch\tAnas\t120\n" +
+            "2\tSteve\t65\t17.4\tC\tNeill\t115\n" +
+            "3\tDave\t55\tFALSE\tCompArch\tAnas\t120\n" +
+            "4\tDave\t55\tFALSE\tC\tNeill\t115\n" +
+            "5\tBob\t35\twillow\tJava\tSimon\t100\n" +
+            "6\tBob\t35\twillow\tOverview of SWE\tRuzana\t90\n" +
+            "7\tClive\t20\t40\tJava\tSimon\t100\n" +
+            "8\tClive\t20\t40\tOverview of SWE\tRuzana\t90\n", sendCommandToServer("JOIN marks AND courses ON " +
             "pass AND difficult;"));
+    }
+    @Test
+    public void joinTest_2() {
+        assertEquals("[OK]\n" +
+            "id\tmarks.name\tmarks.mark\tmarks.pass\tmarks.worrisomedata\tcourses.name\tcourses.teacher\tcourses.students\n" +
+            "1\tDave\t55\tTRUE\tJava\tSimon\t100\n" +
+            "2\tDave\t55\tTRUE\tOverview of SWE\tRuzana\t90\n", sendCommandToServer("JOIN marks AND courses ON " +
+            "worrisomeData AND difficult;"));
+    }
+    @Test
+    public void joinTest_3() {
+        assertTrue(sendCommandToServer("JOIN marks AND courses ON " +
+            "worrisomeData and name;").contains("[OK]"));
+    }
+    @Test
+    public void joinTest_4() {
+        assertTrue(sendCommandToServer("JOIN marks AND courses ON " +
+            "difficult AND name;").contains("[ERROR]"));
     }
     
     

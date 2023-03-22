@@ -828,7 +828,8 @@ public class Parser {
         
         for (String arg : args) {
             skipWhiteSpace();
-            if (command.startsWith(arg, index)) {
+            if (command.substring(index,
+                index + arg.length()).equalsIgnoreCase(arg)) {
                 index += arg.length();
             } else {
                 index = resetIndex;
