@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Objects;
+import org.apache.commons.io.FileUtils;
 
 public class Database {
     private final ArrayList<Table> tables;
@@ -316,7 +317,11 @@ public class Database {
         String pathName = "databases" + File.separator + name;
         File databaseDirectory = new File(pathName);
     
-        if (databaseDirectory.exists() && databaseDirectory.isDirectory()) {
+        if (databaseDirectory.exists()) {
+    
+            FileUtils.deleteDirectory(new File(pathName));
+        }
+        /*&& databaseDirectory.isDirectory()) {
             for (File table : Objects.requireNonNull(databaseDirectory.listFiles())) {
                 if (table == null || !table.delete()) {
                     throw new IOException("[ERROR] - unable to delete table "
@@ -331,5 +336,7 @@ public class Database {
                 throw new IOException("[ERROR] - unable to delete database " + name);
             }
         }
+        
+         */
     }
 }
