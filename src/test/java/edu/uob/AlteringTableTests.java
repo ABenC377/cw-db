@@ -196,4 +196,16 @@ public class AlteringTableTests {
             "3\tC\tNeill\t115\t\n" +
             "4\tOverview of SWE\tRuzana\t90\t\n", sendCommandToServer("SELECT * FROM courSES;"));
     }
+    
+    @Test
+    public void testAddingTooFewValues() {
+        assertTrue(sendCommandToServer("INSERT INTO marks VALUES (7, 14, 33" +
+            ".3);").contains("[ERROR]"));
+    }
+    
+    @Test
+    public void testAddingTooManyValues() {
+        assertTrue(sendCommandToServer("INSERT INTO marks VALUES (7, 14, 33" +
+            ".3, true, 'unwanted');").contains("[ERROR]"));
+    }
 }
