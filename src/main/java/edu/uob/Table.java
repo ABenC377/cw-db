@@ -264,22 +264,45 @@ public class Table {
         // result of the comparison
         String argument = row.get(findIndexOfAttribute(conditionNode
                                 .getChild(0).getLastChild().getValue()));
-        int comparisonResult = argument.compareTo(conditionNode
-                .getChild(2).getLastChild().getValue());
+        DataType argType = getDataType(argument);
+        String value = conditionNode.getChild(2).getLastChild().getValue();
+        DataType valType = getDataType(value);
+        
+        if (argType != valType &&
+            !(argType == DataType.FLOAT && valType == DataType.INTEGER) &&
+            !(argType == DataType.INTEGER && valType == DataType.FLOAT) &&
+            valType != DataType.NULL) {
+            return false;
+        }
+        
+        float comparisonResult = (argType == DataType.STRING ||
+                                  argType == DataType.BOOLEAN ||
+                                  valType == DataType.NULL) ?
+            argument.compareTo(value) :
+            Float.valueOf(argument) - Float.valueOf(value);
+        
         // Now a simple switch statement on the basis of the value of the
         // comparator node
         switch(conditionNode.getChild(1).getValue()) {
             case "<" -> {
-                return (comparisonResult < 0);
+                return (argType != DataType.BOOLEAN &&
+                        valType != DataType.NULL &&
+                        comparisonResult < 0);
             }
             case ">" -> {
-                return (comparisonResult > 0);
+                return (argType != DataType.BOOLEAN &&
+                        valType != DataType.NULL &&
+                        comparisonResult > 0);
             }
             case "<=" -> {
-                return (comparisonResult <= 0);
+                return (argType != DataType.BOOLEAN &&
+                        valType != DataType.NULL &&
+                        comparisonResult <= 0);
             }
             case ">=" -> {
-                return (comparisonResult >= 0);
+                return (argType != DataType.BOOLEAN &&
+                        valType != DataType.NULL &&
+                        comparisonResult >= 0);
             }
             case "==" -> {
                 return (comparisonResult == 0);
@@ -288,12 +311,28 @@ public class Table {
                 return (comparisonResult != 0);
             }
             case "LIKE" -> {
-                return (argument.contains(conditionNode.getChild(2)
-                        .getLastChild().getValue()));
+                if (argType == DataType.STRING && valType == DataType.STRING) {
+                    return (argument.contains(value));
+                } else {
+                    return false;
+                }
             }
             default -> {
                 return false;
             }
+        }
+    }
+    
+    private DataType getDataType(String value) {
+        if (value.equalsIgnoreCase("true") ||
+            value.equalsIgnoreCase("false")) {
+            return DataType.BOOLEAN;
+        } else if (Character.isDigit(value.charAt(0)) ||
+                   value.charAt(0) == '+' ||
+                   value.charAt(0) == '-') {
+            return (value.contains(".")) ? DataType.FLOAT : DataType.INTEGER;
+        } else {
+            return DataType.STRING;
         }
     }
     
