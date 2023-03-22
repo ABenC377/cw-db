@@ -79,8 +79,6 @@ public class SelectQueryTests {
     }
     @Test
     public void testValidNestedConditions_4() {
-        System.out.println(sendCommandToServer("SELECT name FROM marks WHERE " +
-            "(WorrisOMEdaTa == false);"));
         assertEquals("[OK]\n" +
             "name\t\n" +
             "Dave\t\n", sendCommandToServer("SELECT name FROM marks WHERE " +
@@ -104,8 +102,6 @@ public class SelectQueryTests {
     
     @Test
     public void testValidNestedConditions_7() {
-        System.out.println(sendCommandToServer("SELECT name FROM marks WHERE " +
-            "(WorrisOMEdaTa < 30);"));
         assertTrue(sendCommandToServer("SELECT name FROM marks WHERE " +
             "(WorrisOMEdaTa < 30);").contains("[OK]"));
     }

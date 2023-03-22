@@ -232,6 +232,7 @@ public class Database {
                 if (joinValueOne.equals(joinValueTwo)) {
                     outputTable.append(makeJoinRow(joinID, rowOne, rowTwo,
                         attributeOneIndex, attributeTwoIndex));
+                    joinID++;
                 }
             }
         }
