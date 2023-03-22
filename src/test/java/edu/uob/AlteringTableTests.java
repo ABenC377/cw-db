@@ -171,4 +171,15 @@ public class AlteringTableTests {
     public void testChangingTable_9() {
         assertTrue(sendCommandToServer("ALTER TABLE courses DROP id;").contains("[ERROR]"));
     }
+    
+    @Test
+    public void testChangingTable_10() {
+        assertTrue(sendCommandToServer("ALTER TABLE courses DROP diffICULT;").contains("[OK]"));
+        assertEquals("[OK]\n" +
+            "id\tname\tteacher\tstudents\t\n" +
+            "1\tCompArch\tAnas\t120\t\n" +
+            "2\tJava\tSimon\t100\t\n" +
+            "3\tC\tNeill\t115\t\n" +
+            "4\tOverview of SWE\tRuzana\t90\t\n", sendCommandToServer("SELECT * FROM courSES;"));
+    }
 }
