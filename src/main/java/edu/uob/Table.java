@@ -275,7 +275,9 @@ public class Table {
         String argument = row.get(findIndexOfAttribute(conditionNode
                                 .getChild(0).getLastChild().getValue()));
         DataType argType = getDataType(argument);
-        String value = conditionNode.getChild(2).getLastChild().getValue();
+        String value = (conditionNode.getChild(2).getType() == NodeType.VALUE) ?
+            conditionNode.getChild(2).getValue() :
+            conditionNode.getChild(2).getLastChild().getValue();
         DataType valType = getDataType(value);
         
         if (argType != valType &&

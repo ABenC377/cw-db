@@ -42,7 +42,7 @@ public class InterpretterTests {
     }
     
     @Test
-    public void testValidCreation() throws IOException {
+    public void testValidCreation() {
         assertEquals("""
             [OK]
             id\tname\tmark\tpass\tworrisomedata\t
@@ -54,7 +54,7 @@ public class InterpretterTests {
     }
     
     @Test
-    public void testSignedInts() throws IOException {
+    public void testSignedInts() {
         assertEquals("[OK]\n", sendCommandToServer("INSERT INTO marks VALUES" +
             "('Ollie', +69, TRUE, -69);"));
         assertEquals("""
@@ -66,5 +66,18 @@ public class InterpretterTests {
             4\tClive\t20\tFALSE\t40\t
             5\tOllie\t69\tTRUE\t-69\t
             """, sendCommandToServer("SELECT * FROM marks;"));
+    }
+    
+    @Test
+    public void testNotEqualToNull() {
+        assertEquals("""
+            [OK]
+            id\tname\tmark\tpass\tworrisomedata\t
+            1\tSteve\t65\tTRUE\t17.4\t
+            2\tDave\t55\tTRUE\tFALSE\t
+            3\tBob\t35\tFALSE\twillow\t
+            4\tClive\t20\tFALSE\t40\t
+            5\tOllie\t69\tTRUE\t-69\t
+            """, sendCommandToServer("SELECT * FROM marks WHERE pass != nuLL;"));
     }
 }

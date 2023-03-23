@@ -51,6 +51,7 @@ public class DBServer {
         AbstractSyntaxTree ast;
         try {
             ast = new AbstractSyntaxTree(command);
+            System.out.println(ast); // debugging
         } catch (IOException err) {
             return err.getMessage();
         }

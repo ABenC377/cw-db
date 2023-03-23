@@ -316,7 +316,7 @@ public class Parser {
         // Start by checking for a keyword to flag NULL or string literal
         // Then run through checking for the other types of value
         int resetIndex = index;
-        if (substringIsNext("NULL")) {
+        if (substringIsNextCaseInsensitive("NULL")) {
             current.setValue("NULL");
             return true;
         } else if (substringIsNext("'")) {
