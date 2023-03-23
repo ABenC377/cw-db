@@ -65,4 +65,10 @@ public class ParserInvalidQueryTests {
             "4); INSERT INTO courses VALUES (5, 6, 7, 8);").contains("[ERROR" +
             "]"));
     }
+    
+    @Test
+    public void testTwoDecimalPlacesInValue_TestingFailure() {
+        assertTrue(sendCommandToServer("INSERT INTO courses VALUES (1.3.2, 2," +
+            " 3, 4);").contains("[ERROR]"));
+    }
 }
