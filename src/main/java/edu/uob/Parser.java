@@ -21,39 +21,39 @@ public class Parser {
         if (tryUse()) {
             current.setType(NodeType.USE);
             current = current.getParent();
-            return substringIsNext(";");
+            return (substringIsNext(";") && (index == command.length()));
         } else if (tryCreate()) {
             current.setType(NodeType.CREATE);
             current = current.getParent();
-            return substringIsNext(";");
+            return (substringIsNext(";") && (index == command.length()));
         } else if (tryDrop()) {
             current.setType(NodeType.DROP);
             current = current.getParent();
-            return substringIsNext(";");
+            return (substringIsNext(";") && (index == command.length()));
         } else if (tryAlter()) {
             current.setType(NodeType.ALTER);
             current = current.getParent();
-            return substringIsNext(";");
+            return (substringIsNext(";") && (index == command.length()));
         } else if (tryInsert()) {
             current.setType(NodeType.INSERT);
             current = current.getParent();
-            return substringIsNext(";");
+            return (substringIsNext(";") && (index == command.length()));
         } else if (trySelect()) {
             current.setType(NodeType.SELECT);
             current = current.getParent();
-            return substringIsNext(";");
+            return (substringIsNext(";") && (index == command.length()));
         } else if (tryUpdate()) {
             current.setType(NodeType.UPDATE);
             current = current.getParent();
-            return substringIsNext(";");
+            return (substringIsNext(";") && (index == command.length()));
         } else if (tryDelete()) {
             current.setType(NodeType.DELETE);
             current = current.getParent();
-            return substringIsNext(";");
+            return (substringIsNext(";") && (index == command.length()));
         } else if (tryJoin()) {
             current.setType(NodeType.JOIN);
             current = current.getParent();
-            return substringIsNext(";");
+            return (substringIsNext(";") && (index == command.length()));
         } else {
             // getting rid of the impossible command type node before returning
             current = current.getParent();
