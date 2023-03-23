@@ -775,6 +775,9 @@ public class Parser {
     // moving up and down the syntax tree according to parentheses.  It has a
     // boolean return value to tell the caller function when to bail
     private boolean skipWhiteSpaceAndCheckParentheses() {
+        if (index >= command.length()) {
+            return true;
+        }
         char c = command.charAt(index);
         while (index < command.length() &&
                (Character.isWhitespace(c) || c == ')' || c == '(')) {
