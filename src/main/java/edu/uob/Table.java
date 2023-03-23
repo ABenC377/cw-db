@@ -155,11 +155,16 @@ public class Table {
     }
     
     public String selectValues(ArrayList<String> selectAttributes) {
+        // Make an arrayList of selected attributes to ensure that the
+        // attributes of the return String of the query are in the same order
+        // as they are specified in the query
         ArrayList<Integer> attributeIndexes = new ArrayList<>();
         for (String attributeName : selectAttributes) {
             attributeIndexes.add(findIndexOfAttribute(attributeName));
         }
         
+        // Now construct the output stirng based on this ordered ArrayList of
+        // attributes
         StringBuilder output = new StringBuilder();
         for (int index : attributeIndexes) {
             output.append(attributeNames.get(index));
@@ -180,6 +185,8 @@ public class Table {
     
     public String selectValuesWhere(ArrayList<String> selectAttributes,
                                     Node condition) throws IOException {
+        // Make an arrayList of the attribute names we actually want (this
+        // maintains the order from the query)
         ArrayList<Integer> attributeIndexes = new ArrayList<>();
         for (String attributeName : selectAttributes) {
             int attributeIndex = findIndexOfAttribute(attributeName);
@@ -188,13 +195,18 @@ public class Table {
             }
         }
     
+        // Make a StringBuilder to correctly format the output string
         StringBuilder output = new StringBuilder();
+        // Add the attributes to the first row, in the order they are
+        // selected in
         for (int index : attributeIndexes) {
             output.append(attributeNames.get(index));
             output.append("\t");
         }
         output.append(System.lineSeparator());
     
+        // Now iteratively add the rows with the attributes in the order they
+        // are selected, provided that the row passes the condition
         for (ArrayList<String> row : rows) {
             if (passesCondition(row, condition)) {
                 for (int index : attributeIndexes) {
@@ -209,13 +221,18 @@ public class Table {
     }
     
     public String selectValuesWhere(Node condition) throws IOException {
+        // Make a StringBuilder to correctly construct our output string
         StringBuilder output = new StringBuilder();
+        
+        // Add the attribute names to the top line
         for (String attributeName : attributeNames) {
             output.append(attributeName);
             output.append("\t");
         }
         output.append(System.lineSeparator());
         
+        // For each row, add the values to a new line if the values of that
+        // row pass the condition statement
         for (ArrayList<String> row : rows) {
             if (passesCondition(row, condition)) {
                 for (String value : row) {
@@ -225,7 +242,6 @@ public class Table {
                 output.append(System.lineSeparator());
             }
         }
-        
         return output.toString();
     }
     
@@ -240,7 +256,8 @@ public class Table {
                 "statement");
         }
         
-        // Recursively descend the condition tree
+        // Recursively descend the condition tree - when we get to a lead
+        // node then we solve that comparison and push its result back up
         if (conditionNode.getChild(0).getType() == NodeType.ATTRIBUTE_NAME) {
             return solveComparison(row, conditionNode);
         } else if (conditionNode.getChild(1).getValue().equals("AND")) {
@@ -270,8 +287,7 @@ public class Table {
                 "different table");
         }
         
-        // Get the string from the table that we are comparing, and the
-        // result of the comparison
+        // Get the string and duck-typing from the table that we are comparing
         String argument = row.get(findIndexOfAttribute(conditionNode
                                 .getChild(0).getLastChild().getValue()));
         DataType argType = getDataType(argument);
@@ -280,6 +296,8 @@ public class Table {
             conditionNode.getChild(2).getLastChild().getValue();
         DataType valType = getDataType(value);
         
+        // Cut things short if we know that the duck types are "clearly
+        // incompatible"
         if ((argType != valType &&
             !(argType == DataType.FLOAT && valType == DataType.INTEGER) &&
             !(argType == DataType.INTEGER && valType == DataType.FLOAT) &&
@@ -288,6 +306,7 @@ public class Table {
             return false;
         }
         
+        // Get the comparison result between the values
         float comparisonResult = (argType == DataType.STRING ||
                                   argType == DataType.BOOLEAN ||
                                   valType == DataType.NULL) ?
@@ -295,7 +314,7 @@ public class Table {
             Float.parseFloat(argument) - Float.parseFloat(value);
         
         // Now a simple switch statement on the basis of the value of the
-        // comparator node
+        // comparator node and the numerical comparison result from above
         switch(conditionNode.getChild(1).getValue()) {
             case "<" -> {
                 return (argType != DataType.BOOLEAN &&
