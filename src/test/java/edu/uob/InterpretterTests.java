@@ -79,4 +79,16 @@ public class InterpretterTests {
             4\tClive\t20\tFALSE\t40\t
             """, sendCommandToServer("SELECT * FROM marks WHERE pass != nuLL;"));
     }
+    
+    @Test
+    public void testNotEqualToInt() {
+        assertEquals("""
+            [OK]
+            id\tname\tmark\tpass\tworrisomedata\t
+            1\tSteve\t65\tTRUE\t17.4\t
+            2\tDave\t55\tTRUE\tFALSE\t
+            3\tBob\t35\tFALSE\twillow\t
+            4\tClive\t20\tFALSE\t40\t
+            """, sendCommandToServer("SELECT * FROM marks WHERE pass != 7;"));
+    }
 }

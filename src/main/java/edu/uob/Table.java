@@ -280,10 +280,11 @@ public class Table {
             conditionNode.getChild(2).getLastChild().getValue();
         DataType valType = getDataType(value);
         
-        if (argType != valType &&
+        if ((argType != valType &&
             !(argType == DataType.FLOAT && valType == DataType.INTEGER) &&
             !(argType == DataType.INTEGER && valType == DataType.FLOAT) &&
-            valType != DataType.NULL) {
+            valType != DataType.NULL) &&
+            conditionNode.getChild(1).getValue() != "!=") {
             return false;
         }
         
