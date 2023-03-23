@@ -65,14 +65,16 @@ public class ParserValidQueryTests {
     }
     @Test
     public void testAlter() throws IOException {
-        AbstractSyntaxTree ast = new AbstractSyntaxTree("ALTER TABLE tableName ADD tableName.attributeName;");
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("ALTER TABLE " +
+            "tableName ADD tableName.attribut3Name;");
         assertEquals("<command>\n" +
                 "└── <alter>\n" +
                 "    ├── [table name](value = tableName)\n" +
                 "    ├── [alteration type](value = ADD)\n" +
                 "    └── [attribute name]\n" +
                 "        ├── [table name](value = tableName)\n" +
-                "        └── [plain text](value = attributeName)\n", ast.toString());
+                "        └── [plain text](value = attribut3Name)\n",
+            ast.toString());
     }
 
     @Test

@@ -71,4 +71,15 @@ public class ParserInvalidQueryTests {
         assertTrue(sendCommandToServer("INSERT INTO courses VALUES (1.3.2, 2," +
             " 3, 4);").contains("[ERROR]"));
     }
+    
+    @Test
+    public void attributeNameWithNonAlphaNumericChars_TestingFailure() {
+        assertTrue(sendCommandToServer("ALTER TABLE marks ADD attr/bute;").contains("[ERROR]"));
+    }
+    
+    @Test
+    public void tableNameWithNonAlphaNumericChars_TestingFailure() {
+        assertTrue(sendCommandToServer("CREATE TABLE tabl@;").contains(
+            "[ERROR]"));
+    }
 }
