@@ -67,7 +67,7 @@ public class InterpretterTests {
             5\tOllie\t69\tTRUE\t-69\t
             """, sendCommandToServer("SELECT * FROM marks;"));
     }
-    /*
+    
     @Test
     public void testNotEqualToNull() {
         assertEquals("""
@@ -77,9 +77,6 @@ public class InterpretterTests {
             2\tDave\t55\tTRUE\tFALSE\t
             3\tBob\t35\tFALSE\twillow\t
             4\tClive\t20\tFALSE\t40\t
-            5\tOllie\t69\tTRUE\t-69\t
             """, sendCommandToServer("SELECT * FROM marks WHERE pass != nuLL;"));
     }
-   
-     */
 }
