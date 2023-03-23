@@ -275,9 +275,7 @@ public class Table {
         String argument = row.get(findIndexOfAttribute(conditionNode
                                 .getChild(0).getLastChild().getValue()));
         DataType argType = getDataType(argument);
-        String value = (conditionNode.getChild(2).getType() == NodeType.VALUE) ?
-            conditionNode.getChild(2).getValue() :
-            conditionNode.getChild(2).getLastChild().getValue();
+        String value = conditionNode.getChild(2).getLastChild().getValue();
         DataType valType = getDataType(value);
         
         if (argType != valType &&
@@ -336,7 +334,9 @@ public class Table {
     }
     
     private DataType getDataType(String value) {
-        if (value.equalsIgnoreCase("true") ||
+        if (value.equalsIgnoreCase("null")) {
+            return DataType.NULL;
+        } else if (value.equalsIgnoreCase("true") ||
             value.equalsIgnoreCase("false")) {
             return DataType.BOOLEAN;
         } else if (Character.isDigit(value.charAt(0)) ||
